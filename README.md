@@ -5,7 +5,7 @@ This is a magick module for filtering advertisements that allows adguardhome to 
 
 用于过滤广告、防DNS劫持，本机流量数据或Wifi都支持，不用其它设置，刷入即可用。
 
-It is used to filter advertisements and prevent DNS hijacking. It supports local traffic data or WiFi. It can be used by swiping in without other settings.
+It is used to filter advertisements and prevent DNS hijacking. It supports local traffic data or WiFi. It can be used directly without other settings.
 
 如需添加其它过滤规则，后台管理地址127.0.0.1:3000，用户名root，密码root，可兼容VPN、免流模块、校园网等特殊使用环境。 
 
