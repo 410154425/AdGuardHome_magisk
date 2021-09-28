@@ -1,7 +1,7 @@
 # AdGuardHome_magisk
 这是一个让AdGuardHome运行在安卓设备上的去广告magisk模块。
 
-This is a de advertising magick module that allows adguardhome to run on Android devices.
+This is a magick module for filtering advertisements that allows adguardhome to run on Android devices.
 
 用于过滤广告、防DNS劫持，本机流量数据或Wifi都支持，不用其它设置，刷入即可用。
 
