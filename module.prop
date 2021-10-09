@@ -3,5 +3,5 @@ name=AdGuardHome模块
 version=20210716
 versionCode=2021071600
 author=top大佬(酷安)
-description=[ 已启用 ] 用于过滤广告、防DNS劫持，本机流量数据或Wifi都支持，管理地址127.0.0.1:3000，用户名root，密码root，可兼容翻软、免流、校园网等特殊使用环境。 
+description=[ 已启用 ] 用于过滤广告、防DNS劫持，本机流量数据或Wifi都支持，管理地址127.0.0.1:3000，用户名root，密码root，可兼容VPN(走VPN的流量不过滤)、免流模块(走http代理可过滤)、校园网等特殊使用环境。 
 #by topdalao
