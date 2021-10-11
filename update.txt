@@ -1,0 +1,21 @@
+AdGuardHome_update,http://z23r562938.iask.in/Adguardhome_magisk,[2021101101]
+
+1.version:
+module.prop
+update.txt
+topdalao
+
+2.by topdalao
+update_sh
+module.prop
+topdalao
+
+update.txt
+
+3.link:
+update.txt
+https://topdalao.lanzoui.com/b02c3cvof
+
+4.file:
+service.sh
+up
