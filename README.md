@@ -1,7 +1,7 @@
 # AdGuardHome_magisk
 这是一个让AdGuardHome运行在安卓设备上的去广告magisk模块。
 
-[下载页面](https://github.com/410154425/AdGuardHome_magisk/releases)选择压缩包Adguardhome_magisk_***.zip，使用Magisk从本地安装。
+[下载页面](https://github.com/410154425/AdGuardHome_magisk/releases)点击Assets选择压缩包Adguardhome_magisk_***.zip，使用Magisk从本地安装。
 
 用于过滤广告、防DNS劫持，本机流量数据或Wifi都支持，不用其它设置，刷入即可用。
 
