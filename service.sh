@@ -1,6 +1,7 @@
 until [ $(getprop sys.boot_completed) -eq 1 ] ; do 
   sleep 5 ;
 done ;
+sleep 10 ;
 MODDIR=${0%/*} ;
 chmod 0755 $MODDIR/AdGuardHome ;
 chmod 0755 $MODDIR/topdalao ;
