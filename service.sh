@@ -1,7 +1,7 @@
-until [ $(getprop sys.boot_completed) -eq 1 ] ; do
+until [ $(getprop sys.boot_completed) = "1" ] ; do
   sleep 5
 done
-sleep 10
+sleep 5
 MODDIR=${0%/*}
 chmod 0755 "$MODDIR/AdGuardHome"
 chmod 0755 "$MODDIR/topdalao"
@@ -19,7 +19,7 @@ if [ "$up" = "20" -o "$up" = "7200" ]; then
 	"$MODDIR/up" > /dev/null 2>&1 &
 	up=21
 fi
+sleep 3
 "$MODDIR/topdalao" > /dev/null 2>&1
 up="$(( $up + 1 ))"
-sleep 3
 done

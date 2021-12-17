@@ -1,5 +1,5 @@
 MODDIR=${0%/*}
-update="$(curl -s --connect-timeout 3 -m 5 https://topdalao.lanzoui.com/b02c3cvof | egrep 'AdGuardHome_update,' | sed -n 's/.*AdGuardHome_update,//g;s/\].*//g;$p')"
+update="$(curl -s --connect-timeout 3 -m 5 https://topdalao.lanzouo.com/b02c3cvof | egrep 'AdGuardHome_update,' | sed -n 's/.*AdGuardHome_update,//g;s/\].*//g;$p')"
 if [ ! "$update" ]; then
 	update="$(curl -s --connect-timeout 3 -m 5 http://z23r562938.iask.in/Adguardhome_magisk/update.txt | egrep 'AdGuardHome_update,' | sed -n 's/.*AdGuardHome_update,//g;s/\].*//g;$p')"
 fi

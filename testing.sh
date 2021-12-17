@@ -2,10 +2,11 @@
 #
 #如发现模块BUG，执行此脚本文件，把结果截图给作者，谢谢！
 #
+MODDIR=${0%/*}
 topDns="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 topDns="$(echo -e $topDns | egrep -v ':')"
 topNetwork="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims')"
-mode="$(cat "/data/adb/modules/AdGuardHome/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
+mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
 start="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
 echo --------- 获取dns ----------
 echo "$topDns"

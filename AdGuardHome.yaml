@@ -88,9 +88,9 @@ tls:
   private_key_path: ""
 filters:
 - enabled: true
-  url: https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
-  name: AdGuard DNS filter
-  id: 1622099020
+  url: https://anti-ad.net/easylist.txt
+  name: 'CHN: anti-AD'
+  id: 1639731575
 whitelist_filters: []
 user_rules:
 - ""
