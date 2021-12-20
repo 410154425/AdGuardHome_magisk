@@ -1,16 +1,43 @@
 MODDIR=${0%/*}
-if [ -f "$MODDIR/disable" ]; then
-	iptables -t nat -F TOPHOME
-	sed -i 's/\[.*\]/\[ 已关闭 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-	exit 0
-fi
 AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
 if [ "$AdGuardHome_sh" = "" ]; then
 	exit 0
 fi
 AdGuardHome_id="$(echo "$AdGuardHome_sh" | egrep -v 'sh|sed|cat|curl|ps|egrep')"
+if [ -f "$MODDIR/disable" ]; then
+	iptables -t nat -F TOPHOME
+	if [ "$AdGuardHome_id" != "" ]; then
+		sed -i 's/\[.*\]/\[ 已关闭过滤 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+		AdGuardHome_pid="$(echo "$AdGuardHome_id" | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
+		if [ "$AdGuardHome_pid" != "" ]; then
+			kill "$AdGuardHome_pid" >/dev/null 2>&1
+			sed -i 's/\[.*\]/\[ 已关闭过滤、已关闭主程序 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+		fi
+	fi
+	exit 0
+fi
+if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
+	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep 'parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true')"
+	if [ "$AdHome_yaml" != "" ]; then
+		sed -i 's/parental_enabled: true/parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
+		sed -i 's/safesearch_enabled: true/safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
+		sed -i 's/safebrowsing_enabled: true/safebrowsing_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
+		AdGuardHome_pid="$(echo "$AdGuardHome_id" | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
+		if [ "$AdGuardHome_pid" != "" ]; then
+			iptables -t nat -F TOPHOME
+			kill "$AdGuardHome_pid" >/dev/null 2>&1
+			sed -i 's/\[.*\]/\[ 主程序重启，请稍等！！！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+			exit 0
+		fi
+	fi
+else
+	sed -i 's/\[.*\]/\[ 配置文件AdGuardHome.yaml不存在 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+	iptables -t nat -F TOPHOME
+	exit 0
+fi
 if [ "$AdGuardHome_id" = "" ]; then
-	sed -i 's/\[.*\]/\[ 主程序未启动，稍等 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+	sed -i 's/\[.*\]/\[ 主程序未启动，请稍等！！！如果长时间未启动，则是系统原因无法启动，不支持 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+	iptables -t nat -F TOPHOME
 	"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 	exit 0
 fi
@@ -18,16 +45,27 @@ NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 
 if [ "$NetworkAgentInfo" = "" ]; then
 	exit 0
 fi
+AdHome_netstat="$(netstat -anp | egrep 'AdGuardHome' | egrep -v 'netstat')"
+if [ "$AdHome_netstat" = "" ]; then
+	hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
+	if [ "$hosts_byte" -gt "100" ]; then
+		sed -i "s/\[.*\]/\[ AdHome端口未启动，请稍等！！！\/system\/etc\/hosts文件过大($hosts_byte字节)，需要等待系统识别完毕，如果长时间未启动，请关闭对应的hosts模块且恢复\/system\/etc\/hosts文件后再试，可使用AdHome订阅hosts规则 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+	else
+		sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！！！如果长时间未启动，则可能与其它模块冲突，请自行排查，或者系统原因不支持 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+	fi
+	iptables -t nat -F TOPHOME
+	exit 0
+fi
 Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI')"
 if [ "$Network" = "" ]; then
 	Network="$NetworkAgentInfo"
 fi
 HostDns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
-HostDns="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
+HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
 mode="$(cat "$MODDIR/mode.conf" | egrep '^mode=' | sed -n 's/.*=//g;p')"
-if [ "$HostDns" = "" -o "$mode" = "2" ]; then
+if [ "$HostDns_1" = "" -o "$mode" = "2" ]; then
 	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
-	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns" | wc -l)"
+	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns_1" | wc -l)"
 	TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
 	TOPHOME_Hostmode="$(echo "$natTOPHOME" | egrep '127.0.0.1:5555' | wc -l)"
 	if [ "$natTOPHOME" != "" ]; then
@@ -45,19 +83,18 @@ else
 	HostVPN="$(echo "$NetworkAgentInfo" | egrep 'type: VPN')"
 	if [ "$HostVPN" != "" ]; then
 		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
-		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns" | wc -l)"
+		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns_1" | wc -l)"
 		TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
 		if [ "$natTOPHOME" != "" ]; then
 			if [ "$TOPHOME_HostDns" != "2" -o "$TOPHOME_HostVPN" != "1" ]; then
 				iptables -t nat -F TOPHOME
-				HostDns_2="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
-				HostDns_2="$(echo -e "$HostDns_2" | egrep -v ':' | sed -n '2p')"
-				if [ "$HostDns_2" != "" -a "$HostDns_2" != "$HostDns" ]; then
+				HostDns_2="$(echo -e "$HostDns" | egrep -v ':' | sed -n '2p')"
+				if [ "$HostDns_2" != "" -a "$HostDns_2" != "$HostDns_1" ]; then
 					iptables -t nat -A TOPHOME -d "$HostDns_2" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
 					iptables -t nat -A TOPHOME -d "$HostDns_2" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
 				fi
-				iptables -t nat -A TOPHOME -d "$HostDns" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-				iptables -t nat -A TOPHOME -d "$HostDns" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+				iptables -t nat -A TOPHOME -d "$HostDns_1" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+				iptables -t nat -A TOPHOME -d "$HostDns_1" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
 				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination 127.0.0.1:9
 				sed -i 's/\[.*\]/\[ 模式1+VPN 运行中 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 			fi
@@ -66,20 +103,19 @@ else
 		fi
 	else
 		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
-		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns" | wc -l)"
-		TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep "$HostDns:53" | wc -l)"
+		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns_1" | wc -l)"
+		TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep "$HostDns_1:53" | wc -l)"
 		if [ "$natTOPHOME" != "" ]; then
 			if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
 				iptables -t nat -F TOPHOME
-				HostDns_2="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
-				HostDns_2="$(echo -e "$HostDns_2" | egrep -v ':' | sed -n '2p')"
-				if [ "$HostDns_2" != "" -a "$HostDns_2" != "$HostDns" ]; then
+				HostDns_2="$(echo -e "$HostDns" | egrep -v ':' | sed -n '2p')"
+				if [ "$HostDns_2" != "" -a "$HostDns_2" != "$HostDns_1" ]; then
 					iptables -t nat -A TOPHOME -d "$HostDns_2" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
 					iptables -t nat -A TOPHOME -d "$HostDns_2" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
 				fi
-				iptables -t nat -A TOPHOME -d "$HostDns" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-				iptables -t nat -A TOPHOME -d "$HostDns" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination "$HostDns:53"
+				iptables -t nat -A TOPHOME -d "$HostDns_1" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+				iptables -t nat -A TOPHOME -d "$HostDns_1" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination "$HostDns_1:53"
 				sed -i 's/\[.*\]/\[ 模式1 运行中 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 			fi
 		else
@@ -120,4 +156,4 @@ if [ "$ipv6OUTPUT" != "" ]; then
 	fi
 fi
 #by topdalao
-#version=2021121700
+#version=2021122000

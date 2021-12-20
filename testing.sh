@@ -3,13 +3,21 @@
 #如发现模块BUG，执行此脚本文件，把结果截图给作者，谢谢！
 #
 MODDIR=${0%/*}
-topDns="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
-topDns="$(echo -e $topDns | egrep -v ':')"
-topNetwork="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims')"
+NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims')"
+Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI')"
+if [ "$Network" = "" ]; then
+	Network="$NetworkAgentInfo"
+fi
+HostDns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+HostDns_n="$(echo -e "$HostDns" | egrep -v ':')"
 mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
 start="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
+module_version="$(cat "$MODDIR/module.prop" | egrep 'version=' | sed -n 's/.*version=//g;$p')"
+module_versionCode="$(cat "$MODDIR/module.prop" | egrep 'versionCode=' | sed -n 's/.*versionCode=//g;$p')"
+echo --------- 版本 ----------
+echo "$module_version","$module_versionCode"
 echo --------- 获取dns ----------
-echo "$topDns"
+echo "$HostDns_n"
 echo ---------- 模式 ------------
 echo "$mode"
 echo "$start"
@@ -22,4 +30,4 @@ echo -------- nat_OUTPUT --------
 echo --- ipv6_filter_OUTPUT -----
     ip6tables -t filter -n -L OUTPUT
 echo --------- 网络信息 ----------
-echo "$topNetwork"
+echo "$NetworkAgentInfo"
