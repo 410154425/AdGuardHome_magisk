@@ -1,15 +1,12 @@
+#!/system/bin/sh
 MODDIR=${0%/*}
-AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
-if [ "$AdGuardHome_sh" = "" ]; then
-	exit 0
-fi
-AdGuardHome_id="$(echo "$AdGuardHome_sh" | egrep -v 'sh|sed|cat|curl|ps|egrep')"
+AdGuardHome_id="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|sed|cat|curl|ps|egrep')"
 if [ -f "$MODDIR/disable" ]; then
 	iptables -t nat -F TOPHOME
 	if [ "$AdGuardHome_id" != "" ]; then
 		sed -i 's/\[.*\]/\[ 已关闭过滤 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-		AdGuardHome_pid="$(echo "$AdGuardHome_id" | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
-		if [ "$AdGuardHome_pid" != "" ]; then
+		AdGuardHome_pid="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|sed|cat|curl|ps|egrep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
+		if [ "$AdGuardHome_pid" -gt "1" ]; then
 			kill "$AdGuardHome_pid" >/dev/null 2>&1
 			sed -i 's/\[.*\]/\[ 已关闭过滤、已关闭主程序 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
@@ -22,8 +19,8 @@ if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
 		sed -i 's/parental_enabled: true/parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
 		sed -i 's/safesearch_enabled: true/safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
 		sed -i 's/safebrowsing_enabled: true/safebrowsing_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
-		AdGuardHome_pid="$(echo "$AdGuardHome_id" | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
-		if [ "$AdGuardHome_pid" != "" ]; then
+		AdGuardHome_pid="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|sed|cat|curl|ps|egrep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
+		if [ "$AdGuardHome_pid" -gt "1" ]; then
 			iptables -t nat -F TOPHOME
 			kill "$AdGuardHome_pid" >/dev/null 2>&1
 			sed -i 's/\[.*\]/\[ 主程序重启，请稍等！！！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
@@ -45,13 +42,13 @@ NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 
 if [ "$NetworkAgentInfo" = "" ]; then
 	exit 0
 fi
-AdHome_netstat="$(netstat -anp | egrep 'AdGuardHome' | egrep -v 'netstat')"
+AdHome_netstat="$(netstat -anp | egrep 'AdGuardHome')"
 if [ "$AdHome_netstat" = "" ]; then
 	hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
-	if [ "$hosts_byte" -gt "100" ]; then
-		sed -i "s/\[.*\]/\[ AdHome端口未启动，请稍等！！！\/system\/etc\/hosts文件过大($hosts_byte字节)，需要等待系统识别完毕，如果长时间未启动，请关闭对应的hosts模块且恢复\/system\/etc\/hosts文件后再试，可使用AdHome订阅hosts规则 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+	if [ "$hosts_byte" -gt "1024" ]; then
+		sed -i "s/\[.*\]/\[ AdHome端口未启动，请稍等！！！如果长时间未启动，请关闭hosts相关的模块或删除\/system\/etc\/hosts($hosts_byte字节)文件后再试，可使用AdHome订阅hosts规则 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 	else
-		sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！！！如果长时间未启动，则可能与其它模块冲突，请自行排查，或者系统原因不支持 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+		sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！！！如果长时间未启动，则可能与其它模块冲突，请逐个关闭排查 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 	fi
 	iptables -t nat -F TOPHOME
 	exit 0
@@ -156,4 +153,4 @@ if [ "$ipv6OUTPUT" != "" ]; then
 	fi
 fi
 #by topdalao
-#version=2021122000
+#version=2021122100

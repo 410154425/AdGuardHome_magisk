@@ -21,6 +21,8 @@ echo "$HostDns_n"
 echo ---------- 模式 ------------
 echo "$mode"
 echo "$start"
+echo ---------- 端口 ------------
+netstat -anp | egrep 'AdGuardHome'
 echo --------- 设备信息 ----------
 echo "serialno.$(getprop ro.serialno | sed -n 's/ //g;$p'),release.$(getprop ro.build.version.release | sed -n 's/ //g;$p'),sdk.$(getprop ro.build.version.sdk | sed -n 's/ //g;$p'),brand.$(getprop ro.product.brand | sed -n 's/ //g;$p'),model.$(getprop ro.product.model | sed -n 's/ //g;$p')"
 echo ------- nat_TOPHOME --------

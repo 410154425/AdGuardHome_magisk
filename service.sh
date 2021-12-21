@@ -1,3 +1,4 @@
+#!/system/bin/sh
 until [ $(getprop sys.boot_completed) = "1" ] ; do
   sleep 5
 done
@@ -15,7 +16,7 @@ sleep 3
 up=1
 while :;
 do
-if [ "$up" = "20" -o "$up" = "7200" ]; then
+if [ "$up" = "200" -o "$up" = "14400" ]; then
 	"$MODDIR/up" > /dev/null 2>&1 &
 	up=21
 fi
