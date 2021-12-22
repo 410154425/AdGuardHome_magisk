@@ -3,12 +3,11 @@ bind_port: 3000
 beta_bind_port: 0
 users:
 - name: root
-  password: $2a$10$1upHVWY6P50iMLeAw2fFbOfVOoKe52WsLccjH1FY4YyhBSvcMtI2q
+  password: $2a$10$zHcQbG4nXIzPB/Cj5M9lQ.qbQH/EZAT2wakz/sK1.b/d4ey2oqUd2
 auth_attempts: 5
 block_auth_min: 15
 http_proxy: ""
 language: ""
-rlimit_nofile: 0
 debug_pprof: false
 web_session_ttl: 720
 dns:
@@ -18,13 +17,13 @@ dns:
   statistics_interval: 1
   querylog_enabled: false
   querylog_file_enabled: true
-  querylog_interval: 1
+  querylog_interval: 6h
   querylog_size_memory: 1000
   anonymize_client_ip: false
   protection_enabled: true
-  blocking_mode: nxdomain
-  blocking_ipv4: 0.0.0.0
-  blocking_ipv6: '::'
+  blocking_mode: default
+  blocking_ipv4: ""
+  blocking_ipv6: ""
   blocked_response_ttl: 10
   parental_block_host: family-block.dns.adguard.com
   safebrowsing_block_host: standard-block.dns.adguard.com
@@ -42,15 +41,20 @@ dns:
   - 127.0.0.1
   all_servers: true
   fastest_addr: false
+  fastest_timeout: 1s
   allowed_clients: []
   disallowed_clients: []
   blocked_hosts:
   - version.bind
   - id.server
   - hostname.bind
-  cache_size: 1048576
+  trusted_proxies:
+  - 127.0.0.0/8
+  - ::1/128
+  cache_size: 4194304
   cache_ttl_min: 0
   cache_ttl_max: 300
+  cache_optimistic: false
   bogus_nxdomain: []
   aaaa_disabled: false
   enable_dnssec: false
@@ -68,8 +72,10 @@ dns:
   cache_time: 30
   rewrites: []
   blocked_services: []
+  upstream_timeout: 10s
   local_domain_name: lan
   resolve_clients: false
+  use_private_ptr_resolvers: false
   local_ptr_upstreams: []
 tls:
   enabled: false
@@ -90,10 +96,9 @@ filters:
 - enabled: true
   url: https://anti-ad.net/easylist.txt
   name: 'CHN: anti-AD'
-  id: 1639731575
+  id: 1640156838
 whitelist_filters: []
-user_rules:
-- ""
+user_rules: []
 dhcp:
   enabled: false
   interface_name: ""
@@ -118,4 +123,8 @@ log_max_size: 100
 log_max_age: 3
 log_file: ""
 verbose: false
-schema_version: 10
+os:
+  group: ""
+  user: ""
+  rlimit_nofile: 0
+schema_version: 12
