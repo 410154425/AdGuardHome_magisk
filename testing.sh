@@ -14,6 +14,7 @@ mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s
 start="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
 module_version="$(cat "$MODDIR/module.prop" | egrep 'version=' | sed -n 's/.*version=//g;$p')"
 module_versionCode="$(cat "$MODDIR/module.prop" | egrep 'versionCode=' | sed -n 's/.*versionCode=//g;$p')"
+hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
 echo --------- 版本 ----------
 echo "$module_version","$module_versionCode"
 echo --------- 获取dns ----------
@@ -21,6 +22,7 @@ echo "$HostDns_n"
 echo ---------- 模式 ------------
 echo "$mode"
 echo "$start"
+echo hosts："$hosts_byte" 字节
 echo ---------- 端口 ------------
 netstat -anp | egrep 'AdGuardHome'
 echo --------- 设备信息 ----------
