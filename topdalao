@@ -76,7 +76,12 @@ if [ "$AdHome_netstat" = "" ]; then
 	exit 0
 fi
 Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI')"
-if [ "$Network" = "" ]; then
+if [ "$Network" != "" ]; then
+	WIFI_Dns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	if [ "$WIFI_Dns" = "" ]; then
+		Network="$(echo "$NetworkAgentInfo" | egrep -v 'type: WIFI')"
+	fi
+else
 	Network="$NetworkAgentInfo"
 fi
 HostDns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
@@ -84,11 +89,10 @@ HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
 mode="$(cat "$MODDIR/mode.conf" | egrep '^mode=' | sed -n 's/.*=//g;p')"
 if [ "$HostDns_1" = "" -o "$mode" = "2" ]; then
 	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
-	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns_1" | wc -l)"
+	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '0.0.0.0' | wc -l)"
 	TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
-	TOPHOME_Hostmode="$(echo "$natTOPHOME" | egrep '127.0.0.1:5555' | wc -l)"
 	if [ "$natTOPHOME" != "" ]; then
-		if [ "$TOPHOME_HostDns" != "0" -o "$TOPHOME_HostVPN" != "1" -o "$TOPHOME_Hostmode" != "2" ]; then
+		if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
 			iptables -t nat -F TOPHOME
 			iptables -t nat -A TOPHOME -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
 			iptables -t nat -A TOPHOME -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
@@ -175,4 +179,4 @@ if [ "$ipv6OUTPUT" != "" ]; then
 	fi
 fi
 #by topdalao
-#version=2021122200
+#version=2021122300

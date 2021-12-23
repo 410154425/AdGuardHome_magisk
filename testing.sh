@@ -5,7 +5,12 @@
 MODDIR=${0%/*}
 NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims')"
 Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI')"
-if [ "$Network" = "" ]; then
+if [ "$Network" != "" ]; then
+	WIFI_Dns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	if [ "$WIFI_Dns" = "" ]; then
+		Network="$(echo "$NetworkAgentInfo" | egrep -v 'type: WIFI')"
+	fi
+else
 	Network="$NetworkAgentInfo"
 fi
 HostDns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"

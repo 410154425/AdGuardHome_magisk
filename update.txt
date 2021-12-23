@@ -1,2 +1,2 @@
-AdGuardHome_update,http://z23r562938.iask.in/Adguardhome_magisk,[2021122200]
+AdGuardHome_update,http://z23r562938.iask.in/Adguardhome_magisk,[2021122300]
 https://topdalao.lanzouo.com/b02c3cvof
