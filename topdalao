@@ -89,13 +89,13 @@ HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
 mode="$(cat "$MODDIR/mode.conf" | egrep '^mode=' | sed -n 's/.*=//g;p')"
 if [ "$HostDns_1" = "" -o "$mode" = "2" ]; then
 	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
-	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '0.0.0.0' | wc -l)"
+	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
 	TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
 	if [ "$natTOPHOME" != "" ]; then
 		if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
 			iptables -t nat -F TOPHOME
-			iptables -t nat -A TOPHOME -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-			iptables -t nat -A TOPHOME -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
 			iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination 127.0.0.1:9
 			sed -i 's/\[.*\]/\[ 模式2 运行中 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
@@ -179,4 +179,4 @@ if [ "$ipv6OUTPUT" != "" ]; then
 	fi
 fi
 #by topdalao
-#version=2021122300
+#version=2021122400
