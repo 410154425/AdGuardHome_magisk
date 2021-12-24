@@ -1,18 +1,22 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
-AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep' | wc -l)"
-if [ "$AdGuardHome_sh" = "0" ]; then
+AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
+if [ "$AdGuardHome_sh" = "" ]; then
+	sleep 3
+	AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
+	if [ "$AdGuardHome_sh" = "" ]; then
 	sed -i 's/^#!\/system\/bin\/sh.*//g' "$MODDIR/topdalao" >/dev/null 2>&1
-	sed -i 's/\[.*\]/\[ 未启动，请稍等！！！如果长时间未启动，则是系统不支持相关命令，或是命令被占用锁定，请尝试重启或逐个排查模块冲突 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+	sed -i 's/\[.*\]/\[ 未启动，请稍等！！！如果长时间未启动，则是系统不支持相关命令，或是相关命令被占用锁定，请尝试重启或逐个排查模块冲突 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 	iptables -t nat -F TOPHOME
 	exit 0
+	fi
 fi
-AdGuardHome_id="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|egrep' | wc -l)"
+AdGuardHome_id="$(echo "$AdGuardHome_sh" | egrep 'AdGuardHome' | egrep -v 'sh|topdalao|up|cat|ps|curl|sed|netstat|sleep|chmod|dumpsys|echo|getprop|iptables|kill|head|grep|egrep' | wc -l)"
+AdGuardHome_pid="$(echo "$AdGuardHome_sh" | egrep 'AdGuardHome' | egrep -v 'sh|topdalao|up|cat|ps|curl|sed|netstat|sleep|chmod|dumpsys|echo|getprop|iptables|kill|head|grep|egrep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
 if [ -f "$MODDIR/disable" ]; then
 	iptables -t nat -F TOPHOME
 	if [ "$AdGuardHome_id" != "0" ]; then
 		sed -i 's/\[.*\]/\[ 已关闭过滤 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-		AdGuardHome_pid="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|egrep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
 		if [ "$AdGuardHome_pid" -gt "1" ]; then
 			kill "$AdGuardHome_pid" >/dev/null 2>&1
 			sed -i 's/\[.*\]/\[ 已关闭过滤、已关闭主程序 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
@@ -26,13 +30,13 @@ if [ "$AdGuardHome_id" != "1" ]; then
 		if [ "$AdGuardHome_byte" -lt "15000000" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
-			sed -i 's/\[.*\]/\[ 主程序未启动，请稍等！！！如果长时间未启动，则是不兼容无法启动，不支持 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+			uname_m="$(uname -m)"
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！！！如果长时间未启动，则是AdGuardHome.yaml文件错误，或是AdGuardHome文件与系统架构$uname_m不匹配 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
 		iptables -t nat -F TOPHOME
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 		exit 0
 	else
-		AdGuardHome_pid="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|egrep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
 		if [ "$AdGuardHome_pid" -gt "1" ]; then
 			kill "$AdGuardHome_pid" >/dev/null 2>&1
 			sed -i 's/\[.*\]/\[ 正在关闭多余的主程序，请稍等！！！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
@@ -47,7 +51,6 @@ if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
 		sed -i 's/parental_enabled: true/parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
 		sed -i 's/safesearch_enabled: true/safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
 		sed -i 's/safebrowsing_enabled: true/safebrowsing_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
-		AdGuardHome_pid="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|egrep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
 		if [ "$AdGuardHome_pid" -gt "1" ]; then
 			iptables -t nat -F TOPHOME
 			kill "$AdGuardHome_pid" >/dev/null 2>&1
@@ -77,14 +80,14 @@ if [ "$AdHome_netstat" = "" ]; then
 fi
 Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI')"
 if [ "$Network" != "" ]; then
-	WIFI_Dns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ "$WIFI_Dns" = "" ]; then
-		Network="$(echo "$NetworkAgentInfo" | egrep -v 'type: WIFI')"
+		Network="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | egrep -v 'type: WIFI|ims')"
 	fi
 else
 	Network="$NetworkAgentInfo"
 fi
-HostDns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
 mode="$(cat "$MODDIR/mode.conf" | egrep '^mode=' | sed -n 's/.*=//g;p')"
 if [ "$HostDns_1" = "" -o "$mode" = "2" ]; then

@@ -6,28 +6,29 @@ MODDIR=${0%/*}
 NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims')"
 Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI')"
 if [ "$Network" != "" ]; then
-	WIFI_Dns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ "$WIFI_Dns" = "" ]; then
-		Network="$(echo "$NetworkAgentInfo" | egrep -v 'type: WIFI')"
+		Network="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | egrep -v 'type: WIFI|ims')"
 	fi
 else
 	Network="$NetworkAgentInfo"
 fi
-HostDns="$(echo "$Network" | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_n="$(echo -e "$HostDns" | egrep -v ':')"
 mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
 start="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
 module_version="$(cat "$MODDIR/module.prop" | egrep 'version=' | sed -n 's/.*version=//g;$p')"
 module_versionCode="$(cat "$MODDIR/module.prop" | egrep 'versionCode=' | sed -n 's/.*versionCode=//g;$p')"
 hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
+uname_m="$(uname -m)"
 echo --------- 版本 ----------
-echo "$module_version","$module_versionCode"
+echo "$module_version ,$module_versionCode"
 echo --------- 获取dns ----------
 echo "$HostDns_n"
 echo ---------- 模式 ------------
 echo "$mode"
 echo "$start"
-echo hosts："$hosts_byte" 字节
+echo "系统架构：$uname_m ,hosts："$hosts_byte" 字节"
 echo ---------- 端口 ------------
 netstat -anp | egrep 'AdGuardHome'
 echo --------- 设备信息 ----------

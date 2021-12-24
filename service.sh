@@ -16,9 +16,9 @@ sleep 1
 up=1
 while :;
 do
-if [ "$up" = "200" -o "$up" = "14400" ]; then
+if [ "$up" = "20" -o "$up" = "7200" ]; then
 	"$MODDIR/up" > /dev/null 2>&1 &
-	up=201
+	up=21
 fi
 sleep 3
 "$MODDIR/topdalao" > /dev/null 2>&1
