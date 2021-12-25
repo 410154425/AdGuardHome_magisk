@@ -1,12 +1,13 @@
+#!/system/bin/sh
 MODDIR=${0%/*}
 update="$(curl -s --connect-timeout 3 -m 5 https://topdalao.lanzouo.com/b02c3cvof | egrep 'AdGuardHome_update,' | sed -n 's/.*AdGuardHome_update,//g;s/\].*//g;$p')"
-if [ ! "$update" ]; then
+if [ ! -n "$update" ]; then
 	update="$(curl -s --connect-timeout 3 -m 5 http://z23r562938.iask.in/Adguardhome_magisk/update.txt | egrep 'AdGuardHome_update,' | sed -n 's/.*AdGuardHome_update,//g;s/\].*//g;$p')"
 fi
 if [ -n "$update" ]; then
 	update_version="$(echo -E "$update" | sed -n 's/.*\[//g;s/\..*//g;$p')"
-	Host_version="$(cat "$MODDIR/topdalao" | egrep '#version=' | sed -n 's/.*version=//g;s/\..*//g;$p')"
-	if [ "$update_version" != "$Host_version" -o "$(cat "$MODDIR/module.prop" | egrep '#by topdalao' | head -n 1)" != '#by topdalao' ]; then
+	Host_version="$(cat $MODDIR/topdalao | egrep '#version=' | sed -n 's/.*version=//g;s/\..*//g;$p')"
+	if [ "$update_version" != "$Host_version" -o "$(cat $MODDIR/module.prop | egrep '#by topdalao' | head -n 1)" != '#by topdalao' ]; then
 		update_curl="$(echo -E "$update" | sed -n 's/,.*//g;$p')"
 		update_sh="$(curl -s --connect-timeout 3 -m 5 $update_curl/update_sh)"
 		if [ "$(echo -E "$update_sh" | egrep '#by topdalao' | head -n 1)" = '#by topdalao' ]; then
