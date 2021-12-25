@@ -3,17 +3,21 @@
 #如发现模块BUG，执行此脚本文件，把结果截图给作者，谢谢！
 #
 MODDIR=${0%/*}
-NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims')"
-Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI')"
+NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'extra: ims')"
+NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
+if [ "$NetworkAgentInfo_MW" = "0" ]; then
+	exit 0
+fi
+Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni{WIFI')"
 if [ -n "$Network" ]; then
-	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni{WIFI' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ ! -n "$WIFI_Dns" ]; then
-		Network="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | egrep -v 'type: WIFI|ims')"
+		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
 	fi
 else
-	Network="$NetworkAgentInfo"
+	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
 fi
-HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_n="$(echo -e "$HostDns" | egrep -v ':')"
 mode="$(cat $MODDIR/module.prop | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
 start="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
@@ -31,6 +35,7 @@ echo --------- 版本 ----------
 echo "$module_version ,$module_versionCode ,$AdGuardHome_byte"
 echo --------- 获取dns ----------
 echo "$HostDns_n"
+echo "如果获取dns为空,但下面网络信息里却有dns,可找作者适配"
 echo ---------- 模式 ------------
 echo "$mode"
 echo "$start"

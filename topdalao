@@ -31,7 +31,7 @@ if [ "$AdGuardHome_id" != "1" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
 			uname_m="$(uname -m)"
-			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！！！如果长时间未启动，则是模块安装出错需重新安装、或是AdGuardHome.yaml文件错误、或是AdGuardHome文件($AdGuardHome_byte字节)与系统架构$uname_m不匹配 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！！！如果长时间未启动，则是模块安装出错需重新安装、或是AdGuardHome.yaml文件错误、或是AdGuardHome文件($AdGuardHome_byte字节armv8\/arm64专用)与系统架构$uname_m不匹配 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
 		iptables -t nat -F TOPHOME
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
@@ -63,11 +63,6 @@ else
 	iptables -t nat -F TOPHOME
 	exit 0
 fi
-NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'ims')"
-NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | egrep -v 'type: VPN|ims')"
-if [ ! -n "$NetworkAgentInfo_MW" ]; then
-	exit 0
-fi
 AdHome_netstat="$(netstat -anp | egrep 'AdGuardHome' | wc -l)"
 if [ "$AdHome_netstat" = "0" ]; then
 	hosts_byte="$(cat /system/etc/hosts | wc -c)"
@@ -79,16 +74,21 @@ if [ "$AdHome_netstat" = "0" ]; then
 	iptables -t nat -F TOPHOME
 	exit 0
 fi
-Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI')"
+NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'extra: ims')"
+NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
+if [ "$NetworkAgentInfo_MW" = "0" ]; then
+	exit 0
+fi
+Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni{WIFI')"
 if [ -n "$Network" ]; then
-	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni{WIFI' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ ! -n "$WIFI_Dns" ]; then
-		Network="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | egrep -v 'type: WIFI|ims')"
+		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
 	fi
 else
-	Network="$NetworkAgentInfo"
+	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
 fi
-HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | egrep -v 'type: VPN' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
 mode="$(cat $MODDIR/mode.conf | egrep '^mode=' | sed -n 's/.*=//g;p')"
 if [ ! -n "$HostDns_1" -o "$mode" = "2" ]; then
@@ -107,8 +107,8 @@ if [ ! -n "$HostDns_1" -o "$mode" = "2" ]; then
 		iptables -t nat -N TOPHOME
 	fi
 else
-	HostVPN="$(echo "$NetworkAgentInfo" | egrep 'type: VPN')"
-	if [ -n "$HostVPN" ]; then
+	HostVPN="$(echo "$NetworkAgentInfo" | sed -n 's/extra:.*//g;p' | egrep 'VPN' | wc -l)"
+	if [ "$HostVPN" != "0" ]; then
 		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
 		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns_1" | wc -l)"
 		TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
@@ -183,4 +183,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2021122420
+#version=2021122500
