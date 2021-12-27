@@ -31,7 +31,7 @@ if [ "$AdGuardHome_id" != "1" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
 			uname_m="$(uname -m)"
-			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！！！如果长时间未启动，则是模块安装出错需重新安装、或是AdGuardHome.yaml文件错误、或是AdGuardHome文件($AdGuardHome_byte字节armv8\/arm64专用)与系统架构$uname_m不匹配 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！！！如果长时间未启动，则是模块安装出错需重新安装、或是AdGuardHome.yaml文件错误、或是AdGuardHome文件($AdGuardHome_byte字节armv8\/arm64专用)与系统架构$uname_m不匹配(需替换匹配架构的文件) \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
 		iptables -t nat -F TOPHOME
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
