@@ -6,10 +6,10 @@ if [ ! -n "$update" ]; then
 fi
 if [ -n "$update" ]; then
 	update_version="$(echo -E "$update" | sed -n 's/.*\[//g;s/\..*//g;$p')"
-	Host_version="$(cat $MODDIR/topdalao | egrep '#version=' | sed -n 's/.*version=//g;s/\..*//g;$p')"
-	if [ "$update_version" != "$Host_version" -o "$(cat $MODDIR/module.prop | egrep '#by topdalao' | head -n 1)" != '#by topdalao' ]; then
+	Host_version="$(cat "$MODDIR/topdalao" | egrep '#version=' | sed -n 's/.*version=//g;s/\..*//g;$p')"
+	if [ "$update_version" != "$Host_version" -o "$(cat "$MODDIR/module.prop" | egrep '#by topdalao' | head -n 1)" != '#by topdalao' ]; then
 		update_curl="$(echo -E "$update" | sed -n 's/,.*//g;$p')"
-		update_sh="$(curl -s --connect-timeout 3 -m 5 $update_curl/update_sh)"
+		update_sh="$(curl -s --connect-timeout 3 -m 5 "$update_curl/update_sh")"
 		if [ "$(echo -E "$update_sh" | egrep '#by topdalao' | head -n 1)" = '#by topdalao' ]; then
 			echo -E "$update_sh" > "$MODDIR/update_sh" &&
 			chmod 0755 "$MODDIR/update_sh" &&

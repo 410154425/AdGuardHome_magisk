@@ -11,8 +11,8 @@ if [ "$AdGuardHome_sh" = "0" ]; then
 		exit 0
 	fi
 fi
-AdGuardHome_id="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'service|testing|topdalao|up|cat|curl|sed|awk|echo|chmod|grep' | wc -l)"
-AdGuardHome_pid="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'service|testing|topdalao|up|cat|curl|sed|awk|echo|chmod|grep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
+AdGuardHome_id="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|cat|curl|sed|awk|echo|chmod|grep' | wc -l)"
+AdGuardHome_pid="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|cat|curl|sed|awk|echo|chmod|grep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
 if [ -f "$MODDIR/disable" ]; then
 	iptables -t nat -F TOPHOME
 	if [ "$AdGuardHome_id" != "0" ]; then
@@ -26,7 +26,7 @@ if [ -f "$MODDIR/disable" ]; then
 fi
 if [ "$AdGuardHome_id" != "1" ]; then
 	if [ "$AdGuardHome_id" = "0" ]; then
-		AdGuardHome_byte="$(cat $MODDIR/AdGuardHome | wc -c)"
+		AdGuardHome_byte="$(cat "$MODDIR/AdGuardHome" | wc -c)"
 		if [ "$AdGuardHome_byte" -lt "15000000" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
@@ -46,7 +46,7 @@ if [ "$AdGuardHome_id" != "1" ]; then
 	fi
 fi
 if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
-	AdHome_yaml="$(cat $MODDIR/AdGuardHome.yaml | egrep 'parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true' | wc -l)"
+	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep 'parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true' | wc -l)"
 	if [ "$AdHome_yaml" != "0" ]; then
 		sed -i 's/parental_enabled: true/parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
 		sed -i 's/safesearch_enabled: true/safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
@@ -65,7 +65,7 @@ else
 fi
 AdHome_netstat="$(netstat -anp | egrep 'AdGuardHome' | wc -l)"
 if [ "$AdHome_netstat" = "0" ]; then
-	hosts_byte="$(cat /system/etc/hosts | wc -c)"
+	hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
 	if [ "$hosts_byte" -gt "1024" ]; then
 		sed -i "s/\[.*\]/\[ AdHome端口未启动，请稍等！！！如果长时间未启动，请关闭hosts相关的模块或删除\/system\/etc\/hosts($hosts_byte字节)文件后再试，可使用AdHome订阅hosts规则 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 	else
@@ -90,7 +90,7 @@ else
 fi
 HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
-mode="$(cat $MODDIR/mode.conf | egrep '^mode=' | sed -n 's/.*=//g;p')"
+mode="$(cat "$MODDIR/mode.conf" | egrep '^mode=' | sed -n 's/.*=//g;p')"
 if [ ! -n "$HostDns_1" -o "$mode" = "2" ]; then
 	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
 	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
@@ -183,4 +183,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2021122500
+#version=2021122510
