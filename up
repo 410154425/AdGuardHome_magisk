@@ -1,4 +1,3 @@
-#!/system/bin/sh
 MODDIR=${0%/*}
 update="$(curl -s --connect-timeout 3 -m 5 https://topdalao.lanzouo.com/b02c3cvof | egrep 'AdGuardHome_update,' | sed -n 's/.*AdGuardHome_update,//g;s/\].*//g;$p')"
 if [ ! -n "$update" ]; then

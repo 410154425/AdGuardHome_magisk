@@ -1,4 +1,3 @@
-#!/system/bin/sh
 #by topdalao
 MODDIR=${0%/*}
 module_version="$(cat "$MODDIR/module.prop" | egrep 'version=' | sed -n 's/.*version=//g;$p')"
