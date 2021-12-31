@@ -1,18 +1,10 @@
-#!/system/bin/sh
 MODDIR=${0%/*}
-AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome' | wc -l)"
-if [ "$AdGuardHome_sh" = "0" ]; then
-	sleep 1
-	AdGuardHome_sh2="$(ps -ef | egrep 'AdGuardHome' | wc -l)"
-	if [ "$AdGuardHome_sh2" = "0" ]; then
-		sed -i 's/^#!\/system\/bin\/sh.*//g' "$MODDIR/topdalao" >/dev/null 2>&1
-		sed -i 's/\[.*\]/\[ 未启动，请稍等！！！如果长时间未启动，则是相关命令失效，请尝试重启，或是排查模块冲突 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-		iptables -t nat -F TOPHOME
-		exit 0
-	fi
+AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome')"
+if [ ! -n "$AdGuardHome_sh" ]; then
+	exit 0
 fi
-AdGuardHome_id="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|cat|curl|sed|awk|echo|chmod|grep' | wc -l)"
-AdGuardHome_pid="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'sh|cat|curl|sed|awk|echo|chmod|grep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
+AdGuardHome_id="$(echo "$AdGuardHome_sh" | egrep 'AdGuardHome' | egrep -v 'sh|topdalao|up|cat|curl|sed|awk|echo|chmod|grep' | wc -l)"
+AdGuardHome_pid="$(echo "$AdGuardHome_sh" | egrep 'AdGuardHome' | egrep -v 'sh|topdalao|up|cat|curl|sed|awk|echo|chmod|grep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
 if [ -f "$MODDIR/disable" ]; then
 	iptables -t nat -F TOPHOME
 	if [ "$AdGuardHome_id" != "0" ]; then
@@ -31,7 +23,7 @@ if [ "$AdGuardHome_id" != "1" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
 			uname_m="$(uname -m)"
-			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！！！如果长时间未启动，则是模块安装出错需重新安装、或是AdGuardHome.yaml文件错误、或是AdGuardHome文件($AdGuardHome_byte字节armv8\/arm64专用)与系统架构$uname_m不匹配(需替换匹配架构的文件) \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果长时间未启动，则可能是模块安装出错需重新安装、或可能是AdGuardHome.yaml文件错误、或可能是AdGuardHome文件($AdGuardHome_byte字节)与当前系统架构$uname_m不匹配(需下载匹配的架构文件进行替换) \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
 		iptables -t nat -F TOPHOME
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
@@ -39,7 +31,7 @@ if [ "$AdGuardHome_id" != "1" ]; then
 	else
 		if [ "$AdGuardHome_pid" -gt "1" ]; then
 			kill "$AdGuardHome_pid" >/dev/null 2>&1
-			sed -i 's/\[.*\]/\[ 正在关闭多余的主程序，请稍等！！！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i 's/\[.*\]/\[ 正在关闭多余的主程序，请稍等！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 			iptables -t nat -F TOPHOME
 			exit 0
 		fi
@@ -54,7 +46,7 @@ if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
 		if [ "$AdGuardHome_pid" -gt "1" ]; then
 			iptables -t nat -F TOPHOME
 			kill "$AdGuardHome_pid" >/dev/null 2>&1
-			sed -i 's/\[.*\]/\[ 主程序重启，请稍等！！！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i 's/\[.*\]/\[ 主程序重启，请稍等！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 			exit 0
 		fi
 	fi
@@ -63,16 +55,19 @@ else
 	iptables -t nat -F TOPHOME
 	exit 0
 fi
-AdHome_netstat="$(netstat -anp | egrep 'AdGuardHome' | wc -l)"
-if [ "$AdHome_netstat" = "0" ]; then
-	hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
-	if [ "$hosts_byte" -gt "1024" ]; then
-		sed -i "s/\[.*\]/\[ AdHome端口未启动，请稍等！！！如果长时间未启动，请关闭hosts相关的模块或删除\/system\/etc\/hosts($hosts_byte字节)文件后再试，可使用AdHome订阅hosts规则 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
-	else
-		sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！！！如果长时间未启动，则可能与其它模块冲突，请逐个关闭排查 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+netstat_N="$(netstat -anp | egrep 'tcp|udp')"
+if [ -n "$netstat_N" ]; then
+	AdHome_netstat="$(echo "$netstat_N" | egrep 'AdGuardHome' | wc -l)"
+	if [ "$AdHome_netstat" = "0" ]; then
+		hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
+		if [ "$hosts_byte" -gt "1024" ]; then
+			sed -i "s/\[.*\]/\[ AdHome端口未启动，请稍等！如果长时间未启动，请升级本模块到最新版，或关闭hosts相关的模块或删除\/system\/etc\/hosts($hosts_byte字节)文件后再试，可使用AdHome订阅hosts规则 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+		else
+			sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！如果长时间未启动，请升级本模块到最新版，或可能与其它模块冲突，请逐个关闭排查 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+		fi
+		iptables -t nat -F TOPHOME
+		exit 0
 	fi
-	iptables -t nat -F TOPHOME
-	exit 0
 fi
 NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'extra: ims')"
 NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
@@ -183,4 +178,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2021122510
+#version=2022010100

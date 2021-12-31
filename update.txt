@@ -1,2 +1,3 @@
-AdGuardHome_update,http://z23r562938.iask.in/Adguardhome_magisk,[2021122510]
-https://topdalao.lanzouo.com/b02c3cvof
+AdGuardHome_update,http://z23r562938.iask.in/Adguardhome_magisk,[2022010100]
+网盘：https://topdalao.lanzouo.com/b02c3cvof
+密码：1111
