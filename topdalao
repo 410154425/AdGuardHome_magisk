@@ -3,69 +3,59 @@ AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome')"
 if [ ! -n "$AdGuardHome_sh" ]; then
 	exit 0
 fi
-AdGuardHome_id="$(echo "$AdGuardHome_sh" | egrep 'AdGuardHome' | egrep -v 'sh|topdalao|up|cat|curl|sed|awk|echo|chmod|grep' | wc -l)"
-AdGuardHome_pid="$(echo "$AdGuardHome_sh" | egrep 'AdGuardHome' | egrep -v 'sh|topdalao|up|cat|curl|sed|awk|echo|chmod|grep' | sed -n 's/[ ][ ]*/ /g;s/^root//g;s/^ //g;s/ .*//g;$p')"
+AdGuardHome_id="$(pgrep 'AdGuardHome' | wc -l)"
 if [ -f "$MODDIR/disable" ]; then
 	iptables -t nat -F TOPHOME
 	if [ "$AdGuardHome_id" != "0" ]; then
-		sed -i 's/\[.*\]/\[ 已关闭过滤 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-		if [ "$AdGuardHome_pid" -gt "1" ]; then
-			kill "$AdGuardHome_pid" >/dev/null 2>&1
-			sed -i 's/\[.*\]/\[ 已关闭过滤、已关闭主程序 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-		fi
+		pkill 'AdGuardHome' >/dev/null 2>&1
 	fi
+	sed -i 's/\[.*\]/\[ 已关闭 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 	exit 0
 fi
 if [ "$AdGuardHome_id" != "1" ]; then
+	iptables -t nat -F TOPHOME
 	if [ "$AdGuardHome_id" = "0" ]; then
 		AdGuardHome_byte="$(cat "$MODDIR/AdGuardHome" | wc -c)"
 		if [ "$AdGuardHome_byte" -lt "15000000" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
 			uname_m="$(uname -m)"
-			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果长时间未启动，则可能是模块安装出错需重新安装、或可能是AdGuardHome.yaml文件错误、或可能是AdGuardHome文件($AdGuardHome_byte字节)与当前系统架构$uname_m不匹配(需下载匹配的架构文件进行替换) \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果长时间未启动，则可能是AdGuardHome文件($AdGuardHome_byte字节)与当前系统架构$uname_m不匹配(需下载匹配的架构文件进行替换)、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
-		iptables -t nat -F TOPHOME
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
-		exit 0
 	else
-		if [ "$AdGuardHome_pid" -gt "1" ]; then
-			kill "$AdGuardHome_pid" >/dev/null 2>&1
-			sed -i 's/\[.*\]/\[ 正在关闭多余的主程序，请稍等！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-			iptables -t nat -F TOPHOME
-			exit 0
-		fi
+		sed -i 's/\[.*\]/\[ 正在关闭多余的主程序，请稍等！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+		pkill 'AdGuardHome' >/dev/null 2>&1
 	fi
+	exit 0
 fi
 if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
 	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep 'parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true' | wc -l)"
 	if [ "$AdHome_yaml" != "0" ]; then
+		iptables -t nat -F TOPHOME
 		sed -i 's/parental_enabled: true/parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
 		sed -i 's/safesearch_enabled: true/safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
 		sed -i 's/safebrowsing_enabled: true/safebrowsing_enabled: false/g' "$MODDIR/AdGuardHome.yaml" >/dev/null 2>&1
-		if [ "$AdGuardHome_pid" -gt "1" ]; then
-			iptables -t nat -F TOPHOME
-			kill "$AdGuardHome_pid" >/dev/null 2>&1
-			sed -i 's/\[.*\]/\[ 主程序重启，请稍等！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-			exit 0
-		fi
+		pkill 'AdGuardHome' >/dev/null 2>&1
+		sed -i 's/\[.*\]/\[ 主程序重启，请稍等！ \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+		exit 0
 	fi
 else
-	sed -i 's/\[.*\]/\[ 配置文件AdGuardHome.yaml不存在 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 	iptables -t nat -F TOPHOME
+	sed -i 's/\[.*\]/\[ 配置文件AdGuardHome.yaml不存在 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 	exit 0
 fi
 netstat_N="$(netstat -anp | egrep 'tcp|udp')"
 if [ -n "$netstat_N" ]; then
 	AdHome_netstat="$(echo "$netstat_N" | egrep 'AdGuardHome' | wc -l)"
 	if [ "$AdHome_netstat" = "0" ]; then
+		iptables -t nat -F TOPHOME
 		hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
 		if [ "$hosts_byte" -gt "1024" ]; then
 			sed -i "s/\[.*\]/\[ AdHome端口未启动，请稍等！如果长时间未启动，请升级本模块到最新版，或关闭hosts相关的模块或删除\/system\/etc\/hosts($hosts_byte字节)文件后再试，可使用AdHome订阅hosts规则 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
 			sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！如果长时间未启动，请升级本模块到最新版，或可能与其它模块冲突，请逐个关闭排查 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
-		iptables -t nat -F TOPHOME
 		exit 0
 	fi
 fi

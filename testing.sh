@@ -39,6 +39,7 @@ echo "如果获取dns为空,但下面网络信息里却有dns,可找作者适配
 echo ---------- 模式 ------------
 echo "$mode"
 echo "$start"
+pgrep 'AdGuardHome'
 echo "系统架构：$uname_m ,hosts：$hosts_byte 字节 ,head：$topdalao_H"
 echo ---------- 端口 ------------
 netstat -anp | egrep 'AdGuardHome'
