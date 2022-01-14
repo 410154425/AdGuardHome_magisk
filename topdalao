@@ -20,7 +20,7 @@ if [ "$AdGuardHome_id" != "1" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
 			uname_m="$(uname -m)"
-			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果长时间未启动，则可能是AdGuardHome文件($AdGuardHome_byte字节)与当前系统架构$uname_m不匹配(需下载匹配的架构文件进行替换)、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果长时间未启动，则可能是AdGuardHome文件($AdGuardHome_byte字节)与当前系统架构$uname_m不匹配(需下载匹配的架构文件进行替换)、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误、或可能是端口被占用 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 	else
@@ -75,8 +75,28 @@ else
 fi
 HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
-mode="$(cat "$MODDIR/mode.conf" | egrep '^mode=' | sed -n 's/.*=//g;p')"
-if [ ! -n "$HostDns_1" -o "$mode" = "2" ]; then
+mode_conf="$(cat "$MODDIR/mode.conf")"
+mode="$(echo "$mode_conf" | egrep '^mode=' | sed -n 's/.*=//g;$p')"
+if [ "$mode" = "3" ]; then
+	B_DNS="$(echo "$mode_conf" | egrep '^B_DNS=' | sed -n 's/.*=//g;$p')"
+	if [ ! -n "$B_DNS" ]; then
+		B_DNS='114.114.114.114:53'
+	fi
+	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
+	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
+	TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep "$B_DNS" | wc -l)"
+	if [ -n "$natTOPHOME" ]; then
+		if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
+			iptables -t nat -F TOPHOME
+			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+			iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination "$B_DNS"
+			sed -i 's/\[.*\]/\[ 模式3 运行中 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+		fi
+	else
+		iptables -t nat -N TOPHOME
+	fi
+elif [ ! -n "$HostDns_1" -o "$mode" = "2" ]; then
 	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
 	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
 	TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
@@ -168,4 +188,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2022010100
+#version=2022011400

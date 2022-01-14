@@ -39,7 +39,7 @@ dns:
   - '#负载均衡相对省电(推荐),并行请求可能最快但相对耗电'
   upstream_dns_file: ""
   bootstrap_dns:
-  - 127.0.0.1
+  - 10.35.53.10:3553
   all_servers: false
   fastest_addr: false
   fastest_timeout: 1s
