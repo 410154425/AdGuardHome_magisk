@@ -2,7 +2,7 @@ MODDIR=${0%/*}
 mode_conf="$(cat "$MODDIR/mode.conf")"
 Lock_sleep="$(echo "$mode_conf" | egrep '^Lock_sleep=' | sed -n 's/.*=//g;$p')"
 screen_on="$(dumpsys deviceidle get screen)"
-if [ "$screen_on" = "false" ]; then
+if [ "$Lock_sleep" = "1" -a "$screen_on" = "false" ]; then
 	iptables -t nat -F TOPHOME
 	exit 0
 fi
@@ -189,4 +189,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2022041300
+#version=2022041400
