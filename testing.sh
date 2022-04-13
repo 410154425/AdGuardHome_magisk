@@ -20,6 +20,8 @@ fi
 HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_n="$(echo -e "$HostDns" | egrep -v ':')"
 mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
+mode_conf="$(cat "$MODDIR/mode.conf")"
+Lock_sleep="$(echo "$mode_conf" | egrep '^Lock_sleep=' | sed -n 's/.*=//g;$p')"
 start="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
 module_version="$(cat "$MODDIR/module.prop" | egrep 'version=' | sed -n 's/.*version=//g;$p')"
 module_versionCode="$(cat "$MODDIR/module.prop" | egrep 'versionCode=' | sed -n 's/.*versionCode=//g;$p')"
@@ -38,6 +40,7 @@ echo "$HostDns_n"
 echo "如果获取dns为空,但下面网络信息里却有dns,可找作者适配"
 echo ---------- 模式 ------------
 echo "$mode"
+echo "息屏不过滤$Lock_sleep"
 echo "$start"
 pgrep 'AdGuardHome'
 echo "系统架构：$uname_m ,hosts：$hosts_byte 字节 ,head：$topdalao_H"

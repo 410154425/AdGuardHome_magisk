@@ -1,4 +1,11 @@
 MODDIR=${0%/*}
+mode_conf="$(cat "$MODDIR/mode.conf")"
+Lock_sleep="$(echo "$mode_conf" | egrep '^Lock_sleep=' | sed -n 's/.*=//g;$p')"
+screen_on="$(dumpsys deviceidle get screen)"
+if [ "$screen_on" = "false" ]; then
+	iptables -t nat -F TOPHOME
+	exit 0
+fi
 AdGuardHome_sh="$(ps -ef | egrep 'AdGuardHome')"
 if [ ! -n "$AdGuardHome_sh" ]; then
 	exit 0
@@ -20,7 +27,7 @@ if [ "$AdGuardHome_id" != "1" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
 			uname_m="$(uname -m)"
-			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果长时间未启动，则可能是AdGuardHome文件($AdGuardHome_byte字节)与当前系统架构$uname_m不匹配(需下载匹配的架构文件进行替换)、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误、或可能是端口被占用 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果超过1分钟未启动，则可能是AdGuardHome文件($AdGuardHome_byte字节)与当前系统架构$uname_m不匹配(需下载匹配的架构文件进行替换)、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误、或可能是端口被占用 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 	else
@@ -50,12 +57,7 @@ if [ -n "$netstat_N" ]; then
 	AdHome_netstat="$(echo "$netstat_N" | egrep 'AdGuardHome' | wc -l)"
 	if [ "$AdHome_netstat" = "0" ]; then
 		iptables -t nat -F TOPHOME
-		hosts_byte="$(cat '/system/etc/hosts' | wc -c)"
-		if [ "$hosts_byte" -gt "1024" ]; then
-			sed -i "s/\[.*\]/\[ AdHome端口未启动，请稍等！如果长时间未启动，请升级本模块到最新版，或关闭hosts相关的模块或删除\/system\/etc\/hosts($hosts_byte字节)文件后再试，可使用AdHome订阅hosts规则 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
-		else
-			sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！如果长时间未启动，请升级本模块到最新版，或可能与其它模块冲突，请逐个关闭排查 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-		fi
+		sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！如果超过1分钟未启动，请升级AdHome到最新版，或可能与其它模块冲突，请逐个关闭排查 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 		exit 0
 	fi
 fi
@@ -75,7 +77,6 @@ else
 fi
 HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
-mode_conf="$(cat "$MODDIR/mode.conf")"
 mode="$(echo "$mode_conf" | egrep '^mode=' | sed -n 's/.*=//g;$p')"
 if [ "$mode" = "3" ]; then
 	B_DNS="$(echo "$mode_conf" | egrep '^B_DNS=' | sed -n 's/.*=//g;$p')"
@@ -96,7 +97,7 @@ if [ "$mode" = "3" ]; then
 	else
 		iptables -t nat -N TOPHOME
 	fi
-elif [ ! -n "$HostDns_1" -o "$mode" = "2" ]; then
+elif [ "$mode" = "2" -o ! -n "$HostDns_1" ]; then
 	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
 	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
 	TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
@@ -188,4 +189,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2022011400
+#version=2022041300
