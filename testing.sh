@@ -10,18 +10,20 @@ if [ "$NetworkAgentInfo_MW" = "0" ]; then
 fi
 Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni{WIFI')"
 if [ -n "$Network" ]; then
-	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni{WIFI' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni{WIFI' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ ! -n "$WIFI_Dns" ]; then
 		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
 	fi
 else
 	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
 fi
-HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_n="$(echo -e "$HostDns" | egrep -v ':')"
 mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
 mode_conf="$(cat "$MODDIR/mode.conf")"
 Lock_sleep="$(echo "$mode_conf" | egrep '^Lock_sleep=' | sed -n 's/.*=//g;$p')"
+port_testing="$(echo "$mode_conf" | egrep '^port_testing=' | sed -n 's/.*=//g;$p')"
+port_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep ' port: ')"
 start="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
 module_version="$(cat "$MODDIR/module.prop" | egrep 'version=' | sed -n 's/.*version=//g;$p')"
 module_versionCode="$(cat "$MODDIR/module.prop" | egrep 'versionCode=' | sed -n 's/.*versionCode=//g;$p')"
@@ -41,6 +43,8 @@ echo "如果获取dns为空,但下面网络信息里却有dns,可找作者适配
 echo ---------- 模式 ------------
 echo "$mode"
 echo "息屏不过滤$Lock_sleep"
+echo "AdHome端口启动检测$port_testing"
+echo "$port_yaml"
 echo "$start"
 pgrep 'AdGuardHome'
 echo "系统架构：$uname_m ,hosts：$hosts_byte 字节 ,head：$topdalao_H"

@@ -52,13 +52,16 @@ else
 	sed -i 's/\[.*\]/\[ 配置文件AdGuardHome.yaml不存在 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 	exit 0
 fi
-netstat_N="$(netstat -anp | egrep 'tcp|udp')"
-if [ -n "$netstat_N" ]; then
-	AdHome_netstat="$(echo "$netstat_N" | egrep 'AdGuardHome' | wc -l)"
-	if [ "$AdHome_netstat" = "0" ]; then
-		iptables -t nat -F TOPHOME
-		sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！如果超过1分钟未启动，请升级AdHome到最新版，或可能与其它模块冲突，请逐个关闭排查 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
-		exit 0
+port_testing="$(echo "$mode_conf" | egrep '^port_testing=' | sed -n 's/.*=//g;$p')"
+if [ "$port_testing" != "0" ]; then
+	netstat_N="$(netstat -anp | egrep 'tcp|udp')"
+	if [ -n "$netstat_N" ]; then
+		AdHome_netstat="$(echo "$netstat_N" | egrep 'AdGuardHome' | wc -l)"
+		if [ "$AdHome_netstat" = "0" ]; then
+			iptables -t nat -F TOPHOME
+			sed -i 's/\[.*\]/\[ AdHome端口未启动，请稍等！如果超过1分钟未启动，请升级AdHome到最新版，或可能与其它模块冲突，请逐个关闭排查，或到mode.conf文件关闭AdHome端口启动检测 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+			exit 0
+		fi
 	fi
 fi
 NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'extra: ims')"
@@ -68,14 +71,15 @@ if [ "$NetworkAgentInfo_MW" = "0" ]; then
 fi
 Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni{WIFI')"
 if [ -n "$Network" ]; then
-	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni{WIFI' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni{WIFI' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ ! -n "$WIFI_Dns" ]; then
 		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
 	fi
 else
 	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
 fi
-HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.*DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+port_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep ' port: ' | sed -n 's/.* port: //g;s/ //g;1p')"
+HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
 mode="$(echo "$mode_conf" | egrep '^mode=' | sed -n 's/.*=//g;$p')"
 if [ "$mode" = "3" ]; then
@@ -89,8 +93,8 @@ if [ "$mode" = "3" ]; then
 	if [ -n "$natTOPHOME" ]; then
 		if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
 			iptables -t nat -F TOPHOME
-			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 			iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination "$B_DNS"
 			sed -i 's/\[.*\]/\[ 模式3 运行中 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
@@ -104,8 +108,8 @@ elif [ "$mode" = "2" -o ! -n "$HostDns_1" ]; then
 	if [ -n "$natTOPHOME" ]; then
 		if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
 			iptables -t nat -F TOPHOME
-			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 			iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination 127.0.0.1:9
 			sed -i 's/\[.*\]/\[ 模式2 运行中 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
@@ -123,11 +127,11 @@ else
 				iptables -t nat -F TOPHOME
 				HostDns_2="$(echo -e "$HostDns" | egrep -v ':' | sed -n '2p')"
 				if [ -n "$HostDns_2" -a "$HostDns_2" != "$HostDns_1" ]; then
-					iptables -t nat -A TOPHOME -d "$HostDns_2" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-					iptables -t nat -A TOPHOME -d "$HostDns_2" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+					iptables -t nat -A TOPHOME -d "$HostDns_2" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+					iptables -t nat -A TOPHOME -d "$HostDns_2" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 				fi
-				iptables -t nat -A TOPHOME -d "$HostDns_1" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-				iptables -t nat -A TOPHOME -d "$HostDns_1" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+				iptables -t nat -A TOPHOME -d "$HostDns_1" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME -d "$HostDns_1" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination 127.0.0.1:9
 				sed -i 's/\[.*\]/\[ 模式1+VPN 运行中 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 			fi
@@ -143,11 +147,11 @@ else
 				iptables -t nat -F TOPHOME
 				HostDns_2="$(echo -e "$HostDns" | egrep -v ':' | sed -n '2p')"
 				if [ -n "$HostDns_2" -a "$HostDns_2" != "$HostDns_1" ]; then
-					iptables -t nat -A TOPHOME -d "$HostDns_2" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-					iptables -t nat -A TOPHOME -d "$HostDns_2" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+					iptables -t nat -A TOPHOME -d "$HostDns_2" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+					iptables -t nat -A TOPHOME -d "$HostDns_2" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 				fi
-				iptables -t nat -A TOPHOME -d "$HostDns_1" -p udp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
-				iptables -t nat -A TOPHOME -d "$HostDns_1" -p tcp --dport 53 -j DNAT --to-destination 127.0.0.1:5555
+				iptables -t nat -A TOPHOME -d "$HostDns_1" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME -d "$HostDns_1" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination "$HostDns_1:53"
 				sed -i 's/\[.*\]/\[ 模式1 运行中 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 			fi
@@ -189,4 +193,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2022041400
+#version=2022042400
