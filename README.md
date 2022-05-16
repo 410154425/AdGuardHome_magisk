@@ -3,7 +3,7 @@
 
 [下载页面](https://github.com/410154425/AdGuardHome_magisk/releases)点击Assets选择压缩包AdHome_Magisk_***.zip，使用Magisk从本地安装。
 
-通过DNS层面过滤广告、防DNS劫持，本机流量数据或Wifi都支持，不用其它设置，刷入即可用。
+通过DNS层面过滤广告、防DNS劫持，使用前请先详读mode.conf文件，本机流量数据或Wifi都支持，不用其它设置，刷入即可用。
 
 AdHome后台管理地址127.0.0.1:3000，用户名root，密码root，可兼容VPN、免模块、翻模块、校园网、热点共享等特殊使用环境。 
 
