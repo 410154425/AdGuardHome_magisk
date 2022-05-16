@@ -19,6 +19,11 @@ if [ -f "$MODDIR/disable" ]; then
 	sed -i 's/\[.*\]/\[ 已关闭 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
 	exit 0
 fi
+if [ -f "$MODDIR/stop" ]; then
+	iptables -t nat -F TOPHOME
+	sed -i 's/\[.*\]/\[ 暂停过滤 \]/g' "$MODDIR/module.prop" >/dev/null 2>&1
+	exit 0
+fi
 if [ "$AdGuardHome_id" != "1" ]; then
 	iptables -t nat -F TOPHOME
 	if [ "$AdGuardHome_id" = "0" ]; then
@@ -193,4 +198,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2022042400
+#version=2022051600

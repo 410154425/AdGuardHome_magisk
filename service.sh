@@ -11,6 +11,10 @@ chmod 0755 "$MODDIR/up"
 chmod 0644 "$MODDIR/mode.conf"
 chmod 0644 "$MODDIR/AdGuardHome.yaml"
 sleep 1
+echo "rm -f \"$MODDIR/stop\"" > "$MODDIR/恢复过滤.sh"
+echo "touch \"$MODDIR/stop\"" > "$MODDIR/暂停过滤.sh"
+chmod 0755 "$MODDIR/恢复过滤.sh"
+chmod 0755 "$MODDIR/暂停过滤.sh"
 "$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 up=1
 while :;
