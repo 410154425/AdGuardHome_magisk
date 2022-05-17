@@ -21,7 +21,7 @@ dns:
   querylog_size_memory: 1000
   anonymize_client_ip: false
   protection_enabled: true
-  blocking_mode: default
+  blocking_mode: null_ip
   blocking_ipv4: ""
   blocking_ipv6: ""
   blocked_response_ttl: 10
@@ -63,7 +63,7 @@ dns:
   max_goroutines: 300
   ipset: []
   filtering_enabled: true
-  filters_update_interval: 12
+  filters_update_interval: 1
   parental_enabled: false
   safesearch_enabled: false
   safebrowsing_enabled: false
