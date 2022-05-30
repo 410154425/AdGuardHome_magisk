@@ -15,6 +15,11 @@ echo "rm -f \"$MODDIR/stop\"" > "$MODDIR/恢复过滤.sh"
 echo "touch \"$MODDIR/stop\"" > "$MODDIR/暂停过滤.sh"
 chmod 0755 "$MODDIR/恢复过滤.sh"
 chmod 0755 "$MODDIR/暂停过滤.sh"
+echo "#执行该脚本，跳转微信网页给作者投币捐赠" > "$MODDIR/.投币捐赠.sh"
+echo "am start -n com.tencent.mm/.plugin.webview.ui.tools.WebViewUI -d https://payapp.weixin.qq.com/qrpay/order/home2?key=idc_CHNDVI_dHFNbTNZIWMDKIEdx0ZtCA-- >/dev/null 2>&1" >> "$MODDIR/.投币捐赠.sh"
+echo "echo \"\"" >> "$MODDIR/.投币捐赠.sh"
+echo "echo \"正在跳转AdHome模块捐赠页面，请稍等。。。\"" >> "$MODDIR/.投币捐赠.sh"
+chmod 0755 "$MODDIR/.投币捐赠.sh"
 "$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 up=1
 while :;
