@@ -69,6 +69,10 @@ if [ "$port_testing" != "0" ]; then
 		fi
 	fi
 fi
+private_dns_mode="$(settings get global private_dns_mode)"
+if [ "$private_dns_mode" = "opportunistic" -o "$private_dns_mode" = "hostname" ]; then
+	settings put global private_dns_mode off
+fi
 NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'extra: ims')"
 NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
 if [ "$NetworkAgentInfo_MW" = "0" ]; then
@@ -198,4 +202,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2022053000
+#version=2022072000

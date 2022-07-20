@@ -48,6 +48,7 @@ echo "$port_yaml"
 echo "$start"
 pgrep 'AdGuardHome'
 echo "系统架构：$uname_m ,hosts：$hosts_byte 字节 ,head：$topdalao_H"
+settings get global private_dns_mode
 echo ---------- 端口 ------------
 netstat -anp | egrep 'AdGuardHome'
 echo --------- 设备信息 ----------
