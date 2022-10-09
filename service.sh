@@ -1,5 +1,7 @@
-until [ $(getprop sys.boot_completed) = "1" ] ; do
-  sleep 5
+until [ -f "${0%/*}/topdalao" ]; do
+	rm -f "${0%/*}/mode" > /dev/null 2>&1
+	sed -i 's/\[.*\]/\[ 文件topdalao丢失，请重新安装模块重启 \]/g' "${0%/*}/module.prop" > /dev/null 2>&1
+	sleep 5
 done
 sleep 5
 MODDIR=${0%/*}
@@ -22,8 +24,7 @@ echo "echo \"正在跳转AdHome模块捐赠页面，请稍等。。。\"" >> "$M
 chmod 0755 "$MODDIR/.投币捐赠.sh"
 "$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 up=1
-while :;
-do
+while true ; do
 if [ "$up" = "20" -o "$up" = "7200" ]; then
 	"$MODDIR/up" > /dev/null 2>&1 &
 	up=21

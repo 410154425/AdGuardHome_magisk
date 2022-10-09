@@ -29,10 +29,10 @@ if [ "$AdGuardHome_id" != "1" ]; then
 	if [ "$AdGuardHome_id" = "0" ]; then
 		AdGuardHome_byte="$(cat "$MODDIR/AdGuardHome" | wc -c)"
 		if [ "$AdGuardHome_byte" -lt "15000000" ]; then
-			sed -i "s/\[.*\]/\[ AdGuardHome文件过小($AdGuardHome_byte字节)，可能安装时解压出错，请重新安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i "s/\[.*\]/\[ AdGuardHome文件过小(${AdGuardHome_byte}字节)，可能下载不完整或安装时解压出错，请重新下载安装本模块 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		else
 			uname_m="$(uname -m)"
-			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果超过1分钟未启动，则可能是AdGuardHome文件($AdGuardHome_byte字节)与当前系统架构$uname_m不匹配(需下载匹配的架构文件进行替换)、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误、或可能是端口被占用 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果超过1分钟未启动，则可能是AdGuardHome文件(${AdGuardHome_byte}字节)与当前系统架构${uname_m}不匹配(需下载匹配的架构文件进行替换)、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误、或可能是端口被占用 \]/g" "$MODDIR/module.prop" >/dev/null 2>&1
 		fi
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 	else
@@ -202,4 +202,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2022072000
+#version=2022100900
