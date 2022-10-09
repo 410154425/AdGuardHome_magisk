@@ -1,5 +1,4 @@
 until [ -f "${0%/*}/topdalao" ]; do
-	rm -f "${0%/*}/mode" > /dev/null 2>&1
 	sed -i 's/\[.*\]/\[ 文件topdalao丢失，请重新安装模块重启 \]/g' "${0%/*}/module.prop" > /dev/null 2>&1
 	sleep 5
 done
