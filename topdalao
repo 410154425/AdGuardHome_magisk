@@ -73,22 +73,22 @@ private_dns_mode="$(settings get global private_dns_mode)"
 if [ "$private_dns_mode" = "opportunistic" -o "$private_dns_mode" = "hostname" ]; then
 	settings put global private_dns_mode off
 fi
-NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'extra: ims')"
-NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
+NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo\{' | egrep -v 'extra: ims')"
+NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo\{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
 if [ "$NetworkAgentInfo_MW" = "0" ]; then
 	exit 0
 fi
-Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni{WIFI')"
+Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni\{WIFI')"
 if [ -n "$Network" ]; then
-	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni{WIFI' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni\{WIFI' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ ! -n "$WIFI_Dns" ]; then
-		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
+		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni\{MOBILE')"
 	fi
 else
-	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
+	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni\{MOBILE')"
 fi
-port_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep ' port: ' | sed -n 's/.* port: //g;s/ //g;1p')"
-HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+port_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep '^  port: ' | sed -n 's/.* port: //g;s/ //g;$p')"
+HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo\{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_1="$(echo -e "$HostDns" | egrep -v ':' | sed -n '1p')"
 mode="$(echo "$mode_conf" | egrep '^mode=' | sed -n 's/.*=//g;$p')"
 if [ "$mode" = "3" ]; then
@@ -202,4 +202,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2022100900
+#version=2023090600

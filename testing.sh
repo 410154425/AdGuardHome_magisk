@@ -3,21 +3,21 @@
 #如发现模块BUG，执行此脚本文件，把结果截图给作者，谢谢！
 #
 MODDIR=${0%/*}
-NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo{' | egrep -v 'extra: ims')"
-NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
+NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo\{' | egrep -v 'extra: ims')"
+NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo\{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
 if [ "$NetworkAgentInfo_MW" = "0" ]; then
 	exit 0
 fi
-Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni{WIFI')"
+Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni\{WIFI')"
 if [ -n "$Network" ]; then
-	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni{WIFI' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
+	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni\{WIFI' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ ! -n "$WIFI_Dns" ]; then
-		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
+		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni\{MOBILE')"
 	fi
 else
-	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni{MOBILE')"
+	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni\{MOBILE')"
 fi
-HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
+HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo\{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_n="$(echo -e "$HostDns" | egrep -v ':')"
 mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
 mode_conf="$(cat "$MODDIR/mode.conf")"
