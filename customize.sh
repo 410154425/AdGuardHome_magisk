@@ -9,7 +9,7 @@ else
 ui_print " -------------------------- "
 fi
 sleep 1
-rm -d "$MODPATH/linux_arm64"
-rm -d "$MODPATH/linux_armv7"
+rm -rf "$MODPATH/linux_arm64"
+rm -rf "$MODPATH/linux_armv7"
 ui_print " ----- 安装已完成，请重启 ---- "
 ui_print " -------------------------- "
