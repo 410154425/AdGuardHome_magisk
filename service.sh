@@ -21,6 +21,10 @@ echo "am start -n com.tencent.mm/.plugin.webview.ui.tools.WebViewUI -d https://p
 echo "echo \"\"" >> "$MODDIR/.投币捐赠.sh"
 echo "echo \"正在跳转AdHome模块捐赠页面，请稍等。。。\"" >> "$MODDIR/.投币捐赠.sh"
 chmod 0755 "$MODDIR/.投币捐赠.sh"
+if [ -f "$MODDIR/t_module" -a "$(cat "$MODDIR/module.prop" | egrep '^#by topdalao' | sed -n '$p')" != '#by topdalao' ]; then
+	cp "$MODDIR/t_module" "$MODDIR/module.prop"
+	chmod 0644 "$MODDIR/module.prop"
+fi
 "$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 up=1
 while true ; do
