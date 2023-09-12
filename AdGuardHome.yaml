@@ -1,6 +1,9 @@
-bind_host: 0.0.0.0
-bind_port: 3000
-beta_bind_port: 0
+http:
+  pprof:
+    port: 6060
+    enabled: false
+  address: 127.0.0.1:3000
+  session_ttl: 720h
 users:
   - name: root
     password: $2a$10$zHcQbG4nXIzPB/Cj5M9lQ.qbQH/EZAT2wakz/sK1.b/d4ey2oqUd2
@@ -8,25 +11,12 @@ auth_attempts: 5
 block_auth_min: 15
 http_proxy: ""
 language: ""
-debug_pprof: false
-web_session_ttl: 720
+theme: auto
 dns:
   bind_hosts:
     - 0.0.0.0
   port: 5591
-  statistics_interval: 1
-  querylog_enabled: false
-  querylog_file_enabled: true
-  querylog_interval: 6h
-  querylog_size_memory: 1000
   anonymize_client_ip: false
-  protection_enabled: true
-  blocking_mode: null_ip
-  blocking_ipv4: ""
-  blocking_ipv6: ""
-  blocked_response_ttl: 10
-  parental_block_host: family-block.dns.adguard.com
-  safebrowsing_block_host: standard-block.dns.adguard.com
   ratelimit: 0
   ratelimit_whitelist: []
   refuse_any: true
@@ -40,6 +30,10 @@ dns:
   upstream_dns_file: ""
   bootstrap_dns:
     - 10.35.53.10:3553
+  fallback_dns:
+    - https://223.6.6.6/dns-query
+    - https://120.53.53.53/dns-query
+    - '#不可填写其它dns,否则可能造成无限循环的dns查询'
   all_servers: false
   fastest_addr: false
   fastest_timeout: 1s
@@ -59,26 +53,21 @@ dns:
   bogus_nxdomain: []
   aaaa_disabled: false
   enable_dnssec: false
-  edns_client_subnet: false
+  edns_client_subnet:
+    custom_ip: ""
+    enabled: false
+    use_custom: false
   max_goroutines: 300
   handle_ddr: true
   ipset: []
   ipset_file: ""
-  filtering_enabled: true
-  filters_update_interval: 1
-  parental_enabled: false
-  safesearch_enabled: false
-  safebrowsing_enabled: false
-  safebrowsing_cache_size: 1048576
-  safesearch_cache_size: 1048576
-  parental_cache_size: 1048576
-  cache_time: 30
-  rewrites: []
-  blocked_services: []
+  bootstrap_prefer_ipv6: false
   upstream_timeout: 10s
   private_networks: []
   use_private_ptr_resolvers: false
   local_ptr_upstreams: []
+  use_dns64: false
+  dns64_prefixes: []
   serve_http3: false
   use_http3_upstreams: false
 tls:
@@ -91,18 +80,29 @@ tls:
   port_dnscrypt: 0
   dnscrypt_config_file: ""
   allow_unencrypted_doh: false
-  strict_sni_check: false
   certificate_chain: ""
   private_key: ""
   certificate_path: ""
   private_key_path: ""
+  strict_sni_check: false
+querylog:
+  ignored: []
+  interval: 6h
+  size_memory: 1000
+  enabled: false
+  file_enabled: true
+statistics:
+  ignored: []
+  interval: 24h
+  enabled: true
 filters:
   - enabled: true
     url: https://anti-ad.net/easylist.txt
     name: 'CHN: anti-AD'
     id: 1640156838
 whitelist_filters: []
-user_rules: []
+user_rules:
+  - ""
 dhcp:
   enabled: false
   interface_name: ""
@@ -120,6 +120,36 @@ dhcp:
     lease_duration: 86400
     ra_slaac_only: false
     ra_allow_slaac: false
+filtering:
+  blocking_ipv4: ""
+  blocking_ipv6: ""
+  blocked_services:
+    schedule:
+      time_zone: UTC
+    ids: []
+  protection_disabled_until: null
+  safe_search:
+    enabled: false
+    bing: true
+    duckduckgo: true
+    google: true
+    pixabay: true
+    yandex: true
+    youtube: true
+  blocking_mode: null_ip
+  parental_block_host: family-block.dns.adguard.com
+  safebrowsing_block_host: standard-block.dns.adguard.com
+  rewrites: []
+  safebrowsing_cache_size: 1048576
+  safesearch_cache_size: 1048576
+  parental_cache_size: 1048576
+  cache_time: 30
+  filters_update_interval: 1
+  blocked_response_ttl: 10
+  filtering_enabled: true
+  parental_enabled: false
+  safebrowsing_enabled: false
+  protection_enabled: true
 clients:
   runtime_sources:
     whois: true
@@ -128,15 +158,16 @@ clients:
     dhcp: true
     hosts: true
   persistent: []
-log_file: ""
-log_max_backups: 0
-log_max_size: 100
-log_max_age: 3
-log_compress: false
-log_localtime: false
-verbose: false
+log:
+  file: ""
+  max_backups: 0
+  max_size: 100
+  max_age: 3
+  compress: false
+  local_time: false
+  verbose: false
 os:
   group: ""
   user: ""
   rlimit_nofile: 0
-schema_version: 14
+schema_version: 27

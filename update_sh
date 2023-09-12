@@ -8,11 +8,11 @@ up2="$(curl -s --connect-timeout 3 -m 5 "$update_curl/topdalao")"
 if [ "$(echo -E "$up1" | egrep '#by topdalao' | head -n 1)" = '#by topdalao' -a "$(echo -E "$up2" | egrep '#by topdalao' | head -n 1)" = '#by topdalao' ]; then
 	echo -E "$up1" > "$MODDIR/module.prop" &&
 	echo -E "$up2" > "$MODDIR/topdalao" &&
-	sed -i "s/version=.*/version=${module_version}/g" "$MODDIR/module.prop" >/dev/null 2>&1
+	sed -i "s/version=.*/version=${module_version}/g" "$MODDIR/module.prop"
 	module_versionCode="$(cat "$MODDIR/module.prop" | egrep 'versionCode=' | sed -n 's/.*versionCode=//g;s/\..*//g;$p')"
 	if [ -n "$Host_version" -a "$Host_version" -lt "$module_versionCode" ]; then
-	sed -i "s/version=.*/version=${module_version}(有更新)/g" "$MODDIR/module.prop" >/dev/null 2>&1
-	sed -i "s/。 .*/。 \( 发现新版本，请到酷安或github.com搜作者动态下载更新 \)/g" "$MODDIR/module.prop" >/dev/null 2>&1
+	sed -i "s/version=.*/version=${module_version}(有更新)/g" "$MODDIR/module.prop"
+	sed -i "s/。 .*/。 \( 发现新版本，请到酷安或github.com搜作者动态下载更新 \)/g" "$MODDIR/module.prop"
 	fi
 	chmod 0755 "$MODDIR/topdalao"
 	chmod 0644 "$MODDIR/module.prop"

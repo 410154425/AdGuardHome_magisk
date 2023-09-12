@@ -6,6 +6,7 @@ MODDIR=${0%/*}
 NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo\{' | egrep -v 'extra: ims')"
 NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo\{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
 if [ "$NetworkAgentInfo_MW" = "0" ]; then
+	echo "无网络连接"
 	exit 0
 fi
 Network="$(echo "$NetworkAgentInfo" | egrep 'type: WIFI|ni\{WIFI')"
@@ -23,7 +24,7 @@ mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s
 mode_conf="$(cat "$MODDIR/mode.conf")"
 Lock_sleep="$(echo "$mode_conf" | egrep '^Lock_sleep=' | sed -n 's/.*=//g;$p')"
 port_testing="$(echo "$mode_conf" | egrep '^port_testing=' | sed -n 's/.*=//g;$p')"
-port_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep ' port: ')"
+port_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep 'port:')"
 start="$(ps -ef | egrep 'AdGuardHome' | egrep -v 'egrep')"
 module_version="$(cat "$MODDIR/module.prop" | egrep 'version=' | sed -n 's/.*version=//g;$p')"
 module_versionCode="$(cat "$MODDIR/module.prop" | egrep 'versionCode=' | sed -n 's/.*versionCode=//g;$p')"
@@ -47,7 +48,7 @@ echo "AdHome端口启动检测$port_testing"
 echo "$port_yaml"
 echo "$start"
 pgrep 'AdGuardHome'
-echo "系统架构：$uname_m ,hosts：$hosts_byte 字节 ,head：$topdalao_H"
+echo "系统架构：$uname_m ,hosts：$hosts_byte 字节 ,head：$topdalao_H ,$module_version ,$module_versionCode"
 settings get global private_dns_mode
 echo ---------- 端口 ------------
 netstat -anp | egrep 'AdGuardHome'
