@@ -31,9 +31,7 @@ dns:
   bootstrap_dns:
     - 10.35.53.10:3553
   fallback_dns:
-    - https://223.6.6.6/dns-query
-    - https://120.53.53.53/dns-query
-    - '#不可填写其它dns,否则可能造成无限循环的dns查询'
+    - '#此处留空不要填'
   all_servers: false
   fastest_addr: false
   fastest_timeout: 1s

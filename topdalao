@@ -83,9 +83,6 @@ if [ -n "$Network" ]; then
 	WIFI_Dns="$(echo "$Network" | egrep 'type: WIFI|ni\{WIFI' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;p')"
 	if [ ! -n "$WIFI_Dns" ]; then
 		Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni\{MOBILE')"
-	else
-		HostDns_Dual_Path="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni\{MOBILE' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
-		Dual_Path_list="$(echo -e "$HostDns_Dual_Path" | egrep '\.' | egrep -v ':')"
 	fi
 else
 	Network="$(echo "$NetworkAgentInfo" | egrep 'type: MOBILE|ni\{MOBILE')"
@@ -98,36 +95,58 @@ if [ -n "$HostDns_3" ]; then
 else
 	HostDns_1="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '1p')"
 fi
+type="$(cat "$MODDIR/type")"
 mode="$(echo "$mode_conf" | egrep '^mode=' | sed -n 's/.*=//g;$p')"
 if [ "$mode" = "3" ]; then
-	B_DNS="$(echo "$mode_conf" | egrep '^B_DNS=' | sed -n 's/.*=//g;$p')"
-	if [ ! -n "$B_DNS" ]; then
-		B_DNS='114.114.114.114:53'
-	fi
-	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
-	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
-	TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep "$B_DNS" | wc -l)"
-	if [ -n "$natTOPHOME" ]; then
-		if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
-			iptables -t nat -F TOPHOME
-			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-			iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination "$B_DNS"
-			sed -i 's/\[.*\]/\[ 模式3 运行中 \]/g' "$MODDIR/module.prop"
+	HostVPN="$(echo "$NetworkAgentInfo" | sed -n 's/extra:.*//g;p' | egrep 'VPN' | wc -l)"
+	if [ "$HostVPN" != "0" ]; then
+		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
+		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
+		TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
+		if [ -n "$natTOPHOME" ]; then
+			if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" -o "$type" != "32" ]; then
+				iptables -t nat -F TOPHOME
+				iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination 127.0.0.1:9
+				echo "32" > "$MODDIR/type"
+				sed -i 's/\[.*\]/\[ 模式3+VPN 运行中 \]/g' "$MODDIR/module.prop"
+			fi
+		else
+			iptables -t nat -N TOPHOME
 		fi
 	else
-		iptables -t nat -N TOPHOME
+		B_DNS="$(echo "$mode_conf" | egrep '^B_DNS=.*\..*\..*\..*:' | sed -n 's/.*=//g;$p')"
+		if [ ! -n "$B_DNS" ]; then
+			B_DNS='114.114.114.114:53'
+		fi
+		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
+		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
+		TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep "$B_DNS" | wc -l)"
+		if [ -n "$natTOPHOME" ]; then
+			if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" -o "$type" != "31" ]; then
+				iptables -t nat -F TOPHOME
+				iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination "$B_DNS"
+				echo "31" > "$MODDIR/type"
+				sed -i 's/\[.*\]/\[ 模式3 运行中 \]/g' "$MODDIR/module.prop"
+			fi
+		else
+			iptables -t nat -N TOPHOME
+		fi
 	fi
 elif [ "$mode" = "2" -o ! -n "$HostDns_1" ]; then
 	natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
 	TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
 	TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
 	if [ -n "$natTOPHOME" ]; then
-		if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
+		if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" -o "$type" != "21" ]; then
 			iptables -t nat -F TOPHOME
 			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 			iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 			iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination 127.0.0.1:9
+			echo "21" > "$MODDIR/type"
 			sed -i 's/\[.*\]/\[ 模式2 运行中 \]/g' "$MODDIR/module.prop"
 		fi
 	else
@@ -137,27 +156,15 @@ else
 	HostVPN="$(echo "$NetworkAgentInfo" | sed -n 's/extra:.*//g;p' | egrep 'VPN' | wc -l)"
 	if [ "$HostVPN" != "0" ]; then
 		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
-		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns_1" | wc -l)"
+		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
 		TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep '127.0.0.1:9' | wc -l)"
 		if [ -n "$natTOPHOME" ]; then
-			if [ "$TOPHOME_HostDns" != "2" -o "$TOPHOME_HostVPN" != "1" ]; then
+			if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" -o "$type" != "12" ]; then
 				iptables -t nat -F TOPHOME
-				HostDns_list="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':')"
-				for i in $HostDns_list ; do
-					if [ -n "$i" -a "$i" != "$HostDns_1" ]; then
-						iptables -t nat -A TOPHOME -d "$i" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-						iptables -t nat -A TOPHOME -d "$i" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-					fi
-				done
-				for i in $Dual_Path_list ; do
-					if [ -n "$i" -a "$i" != "$HostDns_1" ]; then
-						iptables -t nat -A TOPHOME -d "$i" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-						iptables -t nat -A TOPHOME -d "$i" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-					fi
-				done
-				iptables -t nat -A TOPHOME -d "$HostDns_1" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-				iptables -t nat -A TOPHOME -d "$HostDns_1" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination 127.0.0.1:9
+				echo "12" > "$MODDIR/type"
 				sed -i 's/\[.*\]/\[ 模式1+VPN 运行中 \]/g' "$MODDIR/module.prop"
 			fi
 		else
@@ -165,27 +172,15 @@ else
 		fi
 	else
 		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
-		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep "$HostDns_1" | wc -l)"
+		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
 		TOPHOME_HostVPN="$(echo "$natTOPHOME" | egrep "$HostDns_1:53" | wc -l)"
 		if [ -n "$natTOPHOME" ]; then
-			if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" ]; then
+			if [ "$TOPHOME_HostDns" != "3" -o "$TOPHOME_HostVPN" != "1" -o "$type" != "11" ]; then
 				iptables -t nat -F TOPHOME
-				HostDns_list="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':')"
-				for i in $HostDns_list ; do
-					if [ -n "$i" -a "$i" != "$HostDns_1" ]; then
-						iptables -t nat -A TOPHOME -d "$i" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-						iptables -t nat -A TOPHOME -d "$i" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-					fi
-				done
-				for i in $Dual_Path_list ; do
-					if [ -n "$i" -a "$i" != "$HostDns_1" ]; then
-						iptables -t nat -A TOPHOME -d "$i" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-						iptables -t nat -A TOPHOME -d "$i" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-					fi
-				done
-				iptables -t nat -A TOPHOME -d "$HostDns_1" -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
-				iptables -t nat -A TOPHOME -d "$HostDns_1" -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p udp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
+				iptables -t nat -A TOPHOME ! -d 10.35.53.10 -p tcp --dport 53 -j DNAT --to-destination "127.0.0.1:$port_yaml"
 				iptables -t nat -A TOPHOME -d 10.35.53.10 -p udp --dport 3553 -j DNAT --to-destination "$HostDns_1:53"
+				echo "11" > "$MODDIR/type"
 				sed -i 's/\[.*\]/\[ 模式1 运行中 \]/g' "$MODDIR/module.prop"
 			fi
 		else
@@ -226,4 +221,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2023091200
+#version=2023091300

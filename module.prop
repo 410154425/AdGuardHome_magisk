@@ -1,7 +1,7 @@
 id=AdGuardHome
 name=AdGuardHome模块
-version=20230912
-versionCode=2023091200
+version=20230913
+versionCode=2023091300
 author=top大佬(酷安)
 description=[ - ] 通过DNS层面过滤广告、防DNS劫持，使用前请先详读mode.conf文件，支持订阅过滤规则，后台地址http://127.0.0.1:3000，用户名/密码root，配置文件：/data/adb/modules/AdGuardHome/mode.conf。 
 #by topdalao

@@ -20,6 +20,7 @@ else
 fi
 HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo\{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_n="$(echo -e "$HostDns" | egrep -v ':')"
+type="$(cat "$MODDIR/type")"
 mode="$(cat "$MODDIR/module.prop" | egrep '^description=' | sed -n 's/.*=\[//g;s/\].*//g;p')"
 mode_conf="$(cat "$MODDIR/mode.conf")"
 Lock_sleep="$(echo "$mode_conf" | egrep '^Lock_sleep=' | sed -n 's/.*=//g;$p')"
@@ -42,7 +43,7 @@ echo --------- 获取dns ----------
 echo "$HostDns_n"
 echo "如果获取dns为空,但下面网络信息里却有dns,可找作者适配"
 echo ---------- 模式 ------------
-echo "$mode"
+echo "$mode ,$type"
 echo "息屏不过滤$Lock_sleep"
 echo "AdHome端口启动检测$port_testing"
 echo "$port_yaml"
