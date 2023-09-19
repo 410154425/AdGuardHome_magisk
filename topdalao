@@ -42,14 +42,27 @@ if [ "$AdGuardHome_id" != "1" ]; then
 	exit 0
 fi
 if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
-	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep 'parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true' | wc -l)"
+	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep 'parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true|fastest_addr: true|blocking_mode: refused|blocking_mode: nxdomain|cache_ttl_min: ...*|cache_ttl_max: .....*' | wc -l)"
 	if [ "$AdHome_yaml" != "0" ]; then
 		iptables -t nat -F TOPHOME
 		sed -i 's/parental_enabled: true/parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
 		sed -i 's/safesearch_enabled: true/safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
 		sed -i 's/safebrowsing_enabled: true/safebrowsing_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/fastest_addr: true/fastest_addr: false/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/blocking_mode: refused/blocking_mode: null_ip/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/blocking_mode: nxdomain/blocking_mode: null_ip/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/cache_ttl_min: ...*/cache_ttl_min: 0/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/cache_ttl_max: .....*/cache_ttl_max: 300/g' "$MODDIR/AdGuardHome.yaml"
 		pkill 'AdGuardHome'
-		sed -i 's/\[.*\]/\[ 主程序重启，请稍等！ \]/g' "$MODDIR/module.prop"
+		sed -i 's/\[.*\]/\[ 主程序正在重启，请稍等！ \]/g' "$MODDIR/module.prop"
+		exit 0
+	fi
+	safe_search="$(cat "$MODDIR/AdGuardHome.yaml" | egrep -A1 -n ' safe_search:' | egrep ' enabled: true' | sed -n 's/:.*//g;s/\-.*//g;s/ .*//g;$p')"
+	if [ "$safe_search" -gt "1" ]; then
+		iptables -t nat -F TOPHOME
+		sed -i "${safe_search}s/enabled: true/enabled: false/g" "$MODDIR/AdGuardHome.yaml"
+		pkill 'AdGuardHome'
+		sed -i 's/\[.*\]/\[ 请稍等！主程序正在重启 \]/g' "$MODDIR/module.prop"
 		exit 0
 	fi
 else
@@ -74,7 +87,7 @@ if [ "$private_dns_mode" = "opportunistic" -o "$private_dns_mode" = "hostname" ]
 	settings put global private_dns_mode off
 fi
 NetworkAgentInfo="$(dumpsys connectivity | egrep 'NetworkAgentInfo\{' | egrep -v 'extra: ims')"
-NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo\{' | sed -n 's/extra:.*//g;p' | egrep -v 'VPN' | wc -l)"
+NetworkAgentInfo_MW="$(echo "$NetworkAgentInfo" | egrep 'NetworkAgentInfo\{' | sed -n 's/,.*//g;s/\;.*//g;s/extra:.*//g;s/DnsAddresses: \[.*//g;p' | egrep -v 'VPN' | wc -l)"
 if [ "$NetworkAgentInfo_MW" = "0" ]; then
 	exit 0
 fi
@@ -91,14 +104,14 @@ port_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep '^  port: ' | sed -n 's/  po
 HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo\{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_3="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '3p')"
 if [ -n "$HostDns_3" ]; then
-	HostDns_1="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '$p')"
+	HostDns_1="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '3p')"
 else
 	HostDns_1="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '1p')"
 fi
 type="$(cat "$MODDIR/type")"
 mode="$(echo "$mode_conf" | egrep '^mode=' | sed -n 's/.*=//g;$p')"
 if [ "$mode" = "3" ]; then
-	HostVPN="$(echo "$NetworkAgentInfo" | sed -n 's/extra:.*//g;p' | egrep 'VPN' | wc -l)"
+	HostVPN="$(echo "$NetworkAgentInfo" | sed -n 's/,.*//g;s/\;.*//g;s/extra:.*//g;s/DnsAddresses: \[.*//g;p' | egrep 'VPN' | wc -l)"
 	if [ "$HostVPN" != "0" ]; then
 		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
 		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
@@ -116,7 +129,7 @@ if [ "$mode" = "3" ]; then
 			iptables -t nat -N TOPHOME
 		fi
 	else
-		B_DNS="$(echo "$mode_conf" | egrep '^B_DNS=.*\..*\..*\..*:' | sed -n 's/.*=//g;$p')"
+		B_DNS="$(echo "$mode_conf" | egrep '^B_DNS=..*\...*\...*\...*:..*' | sed -n 's/.*=//g;$p')"
 		if [ ! -n "$B_DNS" ]; then
 			B_DNS='114.114.114.114:53'
 		fi
@@ -153,7 +166,7 @@ elif [ "$mode" = "2" -o ! -n "$HostDns_1" ]; then
 		iptables -t nat -N TOPHOME
 	fi
 else
-	HostVPN="$(echo "$NetworkAgentInfo" | sed -n 's/extra:.*//g;p' | egrep 'VPN' | wc -l)"
+	HostVPN="$(echo "$NetworkAgentInfo" | sed -n 's/,.*//g;s/\;.*//g;s/extra:.*//g;s/DnsAddresses: \[.*//g;p' | egrep 'VPN' | wc -l)"
 	if [ "$HostVPN" != "0" ]; then
 		natTOPHOME="$(iptables -t nat -n -L TOPHOME)"
 		TOPHOME_HostDns="$(echo "$natTOPHOME" | egrep '10.35.53.10' | wc -l)"
@@ -221,4 +234,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2023091300
+#version=2023091900
