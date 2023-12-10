@@ -42,9 +42,10 @@ if [ "$AdGuardHome_id" != "1" ]; then
 	exit 0
 fi
 if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
-	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep 'parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true|fastest_addr: true|blocking_mode: refused|blocking_mode: nxdomain|cache_ttl_min: ...*|cache_ttl_max: .....*' | wc -l)"
+	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep ' \- 0.0.0.0|parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true|fastest_addr: true|blocking_mode: refused|blocking_mode: nxdomain|cache_ttl_min: ...*|cache_ttl_max: .....*' | wc -l)"
 	if [ "$AdHome_yaml" != "0" ]; then
 		iptables -t nat -F TOPHOME
+		sed -i 's/ \- 0.0.0.0/ \- 127.0.0.1/g' "$MODDIR/AdGuardHome.yaml"
 		sed -i 's/parental_enabled: true/parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
 		sed -i 's/safesearch_enabled: true/safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
 		sed -i 's/safebrowsing_enabled: true/safebrowsing_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
@@ -234,4 +235,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2023091900
+#version=2023121000

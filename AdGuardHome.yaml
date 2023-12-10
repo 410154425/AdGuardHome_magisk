@@ -14,10 +14,12 @@ language: ""
 theme: auto
 dns:
   bind_hosts:
-    - 0.0.0.0
+    - 127.0.0.1
   port: 5591
   anonymize_client_ip: false
   ratelimit: 0
+  ratelimit_subnet_len_ipv4: 24
+  ratelimit_subnet_len_ipv6: 56
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
@@ -68,6 +70,7 @@ dns:
   dns64_prefixes: []
   serve_http3: false
   use_http3_upstreams: false
+  serve_plain_dns: true
 tls:
   enabled: false
   server_name: ""

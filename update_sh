@@ -1,5 +1,6 @@
 #by topdalao
 MODDIR=${0%/*}
+module_name="$(cat "$MODDIR/module.prop" | egrep 'name=' | sed -n 's/.*name=//g;s/(.*//g;1p')"
 module_version="$(cat "$MODDIR/module.prop" | egrep 'version=' | sed -n 's/.*version=//g;s/(.*//g;$p')"
 Host_version="$(cat "$MODDIR/topdalao" | egrep '#version=' | sed -n 's/.*version=//g;s/\..*//g;$p')"
 update_curl="http://z23r562938.iask.in/Adguardhome_magisk"
@@ -9,6 +10,7 @@ if [ "$(echo -E "$up1" | egrep '#by topdalao' | head -n 1)" = '#by topdalao' -a 
 	echo -E "$up1" > "$MODDIR/module.prop" &&
 	echo -E "$up2" > "$MODDIR/topdalao" &&
 	sed -i "s/version=.*/version=${module_version}/g" "$MODDIR/module.prop"
+	sed -i "s/^name=.*/name=${module_name}/g" "$MODDIR/module.prop"
 	module_versionCode="$(cat "$MODDIR/module.prop" | egrep 'versionCode=' | sed -n 's/.*versionCode=//g;s/\..*//g;$p')"
 	if [ -n "$Host_version" -a "$Host_version" -lt "$module_versionCode" ]; then
 	sed -i "s/version=.*/version=${module_version}(有更新)/g" "$MODDIR/module.prop"
