@@ -32,7 +32,7 @@ if [ "$AdGuardHome_id" != "1" ]; then
 			sed -i "s/\[.*\]/\[ AdGuardHome文件过小(${AdGuardHome_byte}字节)，可能下载不完整或安装时解压出错，请重新下载安装本模块 \]/g" "$MODDIR/module.prop"
 		else
 			uname_m="$(uname -m)"
-			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果超过1分钟未启动，则可能是AdGuardHome文件(${AdGuardHome_byte}字节)与当前系统架构${uname_m}不匹配(需下载匹配的架构文件进行替换)、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误、或可能是端口被占用 \]/g" "$MODDIR/module.prop"
+			sed -i "s/\[.*\]/\[ 主程序未启动，请稍等！如果超过1分钟未启动，则可能是AdGuardHome文件与当前系统架构${uname_m}不匹配、或可能是模块安装出错需重新安装、或可能是yaml配置文件错误、或可能是端口被占用、或可能是模块BUG \]/g" "$MODDIR/module.prop"
 		fi
 		"$MODDIR/AdGuardHome" > /dev/null 2>&1 &
 	else
@@ -42,29 +42,54 @@ if [ "$AdGuardHome_id" != "1" ]; then
 	exit 0
 fi
 if [ -f "$MODDIR/AdGuardHome.yaml" ]; then
-	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep ' \- 0.0.0.0|parental_enabled: true|safesearch_enabled: true|safebrowsing_enabled: true|fastest_addr: true|blocking_mode: refused|blocking_mode: nxdomain|cache_ttl_min: ...*|cache_ttl_max: .....*' | wc -l)"
+	AdHome_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep '^  parental_enabled: true$|^  safesearch_enabled: true$|^  safebrowsing_enabled: true$|^  all_servers: false$|^  fastest_addr: true$|^  upstream_mode: load_balance$|^  upstream_mode: fastest_addr$|^  blocking_mode: refused$|^  blocking_mode: nxdomain$|^  cache_ttl_min: ...*|^  cache_ttl_max: .....*' | wc -l)"
 	if [ "$AdHome_yaml" != "0" ]; then
 		iptables -t nat -F TOPHOME
-		sed -i 's/ \- 0.0.0.0/ \- 127.0.0.1/g' "$MODDIR/AdGuardHome.yaml"
-		sed -i 's/parental_enabled: true/parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
-		sed -i 's/safesearch_enabled: true/safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
-		sed -i 's/safebrowsing_enabled: true/safebrowsing_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
-		sed -i 's/fastest_addr: true/fastest_addr: false/g' "$MODDIR/AdGuardHome.yaml"
-		sed -i 's/blocking_mode: refused/blocking_mode: null_ip/g' "$MODDIR/AdGuardHome.yaml"
-		sed -i 's/blocking_mode: nxdomain/blocking_mode: null_ip/g' "$MODDIR/AdGuardHome.yaml"
-		sed -i 's/cache_ttl_min: ...*/cache_ttl_min: 0/g' "$MODDIR/AdGuardHome.yaml"
-		sed -i 's/cache_ttl_max: .....*/cache_ttl_max: 300/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  parental_enabled: true$/  parental_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  safesearch_enabled: true$/  safesearch_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  safebrowsing_enabled: true$/  safebrowsing_enabled: false/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  all_servers: false$/  all_servers: true/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  fastest_addr: true$/  fastest_addr: false/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  upstream_mode: load_balance$/  upstream_mode: parallel/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  upstream_mode: fastest_addr$/  upstream_mode: parallel/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  blocking_mode: refused$/  blocking_mode: null_ip/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  blocking_mode: nxdomain$/  blocking_mode: null_ip/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  cache_ttl_min: ...*/  cache_ttl_min: 0/g' "$MODDIR/AdGuardHome.yaml"
+		sed -i 's/^  cache_ttl_max: .....*/  cache_ttl_max: 300/g' "$MODDIR/AdGuardHome.yaml"
 		pkill 'AdGuardHome'
-		sed -i 's/\[.*\]/\[ 主程序正在重启，请稍等！ \]/g' "$MODDIR/module.prop"
+		sed -i 's/\[.*\]/\[ 主程序正在重启，yaml，请稍等 \]/g' "$MODDIR/module.prop"
 		exit 0
 	fi
-	safe_search="$(cat "$MODDIR/AdGuardHome.yaml" | egrep -A1 -n ' safe_search:' | egrep ' enabled: true' | sed -n 's/:.*//g;s/\-.*//g;s/ .*//g;$p')"
+	safe_search="$(cat "$MODDIR/AdGuardHome.yaml" | egrep -A1 -n '^  safe_search:$' | egrep '    enabled: true$' | sed -n 's/:.*//g;s/\-.*//g;s/ .*//g;$p')"
 	if [ "$safe_search" -gt "1" ]; then
 		iptables -t nat -F TOPHOME
-		sed -i "${safe_search}s/enabled: true/enabled: false/g" "$MODDIR/AdGuardHome.yaml"
+		sed -i "${safe_search} s/    enabled: true/    enabled: false/g" "$MODDIR/AdGuardHome.yaml"
 		pkill 'AdGuardHome'
-		sed -i 's/\[.*\]/\[ 请稍等！主程序正在重启 \]/g' "$MODDIR/module.prop"
+		sed -i 's/\[.*\]/\[ 主程序正在重启，search，请稍等 \]/g' "$MODDIR/module.prop"
 		exit 0
+	fi
+	upstream_dns="$(cat "$MODDIR/AdGuardHome.yaml" | egrep -n '^  upstream_dns:$' | sed -n 's/:.*//g;s/\-.*//g;s/ .*//g;$p')"
+	blocked_hosts="$(cat "$MODDIR/AdGuardHome.yaml" | egrep -n '^  blocked_hosts:$' | sed -n 's/:.*//g;s/\-.*//g;s/ .*//g;$p')"
+	upstream_dns_n="$(( $blocked_hosts - $upstream_dns ))"
+	if [ "$upstream_dns" -gt "1" -a "$upstream_dns_n" -gt "1" ]; then
+		dns_53="$(cat "$MODDIR/AdGuardHome.yaml" | egrep -A${upstream_dns_n} -n '^  upstream_dns:$' | egrep '    \- [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$|    \- [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:53$|    \- tcp:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$|    \- tcp:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:53$' | sed -n 's/:.*//g;s/\-.*//g;s/ .*//g;p')"
+		if [ -n "$dns_53" ]; then
+			dns_53_n="$(echo "$dns_53" | sed -n '$p')"
+			for i in $dns_53 ; do
+				if [ "$i" -gt "1" ]; then
+					sed -E -i "${i} s/    \- [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$//g" "$MODDIR/AdGuardHome.yaml"
+					sed -E -i "${i} s/    \- [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:53$//g" "$MODDIR/AdGuardHome.yaml"
+					sed -E -i "${i} s/    \- tcp:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$//g" "$MODDIR/AdGuardHome.yaml"
+					sed -E -i "${i} s/    \- tcp:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:53$//g" "$MODDIR/AdGuardHome.yaml"
+					if [ "$i" = "$dns_53_n" ]; then
+						iptables -t nat -F TOPHOME
+						pkill 'AdGuardHome'
+						sed -i 's/\[.*\]/\[ 主程序正在重启，dns，请稍等 \]/g' "$MODDIR/module.prop"
+						exit 0
+					fi
+				fi
+			done
+		fi
 	fi
 else
 	iptables -t nat -F TOPHOME
@@ -104,10 +129,17 @@ fi
 port_yaml="$(cat "$MODDIR/AdGuardHome.yaml" | egrep '^  port: ' | sed -n 's/  port: //g;s/ //g;$p')"
 HostDns="$(echo "$Network" | egrep 'NetworkAgentInfo\{' | sed -n 's/.* DnsAddresses: \[//g;s/\].*//g;s/ //g;s/\///g;s/,/\\n/g;p')"
 HostDns_3="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '3p')"
-if [ -n "$HostDns_3" ]; then
-	HostDns_1="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '3p')"
-else
+I_network="$(echo "$mode_conf" | egrep '^I_network=' | sed -n 's/.*=//g;$p')"
+if [ "$I_network" = "1" ]; then
 	HostDns_1="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '1p')"
+elif [ "$I_network" = "2" ]; then
+	HostDns_1="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '2p')"
+else
+	if [ -n "$HostDns_3" ]; then
+		HostDns_1="$HostDns_3"
+	else
+		HostDns_1="$(echo -e "$HostDns" | egrep '\.' | egrep -v ':' | sed -n '1p')"
+	fi
 fi
 type="$(cat "$MODDIR/type")"
 mode="$(echo "$mode_conf" | egrep '^mode=' | sed -n 's/.*=//g;$p')"
@@ -130,7 +162,7 @@ if [ "$mode" = "3" ]; then
 			iptables -t nat -N TOPHOME
 		fi
 	else
-		B_DNS="$(echo "$mode_conf" | egrep '^B_DNS=..*\...*\...*\...*:..*' | sed -n 's/.*=//g;$p')"
+		B_DNS="$(echo "$mode_conf" | egrep '^B_DNS=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$' | sed -n 's/.*=//g;$p')"
 		if [ ! -n "$B_DNS" ]; then
 			B_DNS='114.114.114.114:53'
 		fi
@@ -235,4 +267,4 @@ if [ -n "$ipv6OUTPUT" ]; then
 	fi
 fi
 #by topdalao
-#version=2023121000
+#version=2024042200
