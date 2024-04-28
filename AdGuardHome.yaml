@@ -100,9 +100,13 @@ statistics:
   enabled: true
 filters:
   - enabled: true
-    url: https://anti-ad.net/easylist.txt
-    name: 'CHN: anti-AD'
-    id: 1640156838
+    url: https://github.tmby.shop/https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt
+    name: '秋风广告规则(AWAvenue-Ads-Rule_天命CFCDN订阅源)'
+    id: 1699370433972
+#  - enabled: true
+#    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_53.txt
+#    name: '秋风广告规则(AWAvenue-Ads-Rule_AdGuardTeam官方订阅源)'
+#    id: 1699370433972
 whitelist_filters: []
 user_rules:
   - ""
